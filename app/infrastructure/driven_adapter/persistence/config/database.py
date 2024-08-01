@@ -2,7 +2,7 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from app.infrastructure.driven_adapter.persistence.config.settings import settings 
+from app.application.settings import settings 
 import os
 
 # Verificar entorno

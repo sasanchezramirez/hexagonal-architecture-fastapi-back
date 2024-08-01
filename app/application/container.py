@@ -1,8 +1,9 @@
-from  dependency_injector import containers, providers
 from app.application.handler import Handlers
 from app.domain.usecase.user_usecase import UserUseCase
 from app.infrastructure.driven_adapter.persistence.service.presistence import Persistence
 from app.infrastructure.driven_adapter.persistence.config.database import SessionLocal
+from dependency_injector import containers, providers
+
 
 class Container(containers.DeclarativeContainer):
 

@@ -20,9 +20,9 @@ class UserRepository:
             return user_entity
         except IntegrityError as e:
             logger.error(f"Operation failed: {e}")
-            if "llave duplicada" in str(e.orig):
+            if "llave duplicada" or "duplicate key" in str(e.orig):
                 raise CustomException(ResponseCodeEnum.KOU01)
-            elif "viola la llave" in str(e.orig):
+            elif "viola la llave" or "key violation" in str(e.orig):
                 if "profile_id" in str(e.orig):
                     raise CustomException(ResponseCodeEnum.KOU03)
                 elif "status_id" in str(e.orig):

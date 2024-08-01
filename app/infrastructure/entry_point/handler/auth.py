@@ -1,4 +1,4 @@
-import  app.infrastructure.entry_point.validator.validator as validator
+import app.infrastructure.entry_point.validator.validator as validator
 import app.infrastructure.entry_point.mapper.user_mapper as user_mapper
 import logging
 
@@ -13,8 +13,6 @@ from app.domain.model.util.custom_exceptions import CustomException
 from app.domain.model.util.response_codes import ResponseCodeEnum
 from app.infrastructure.entry_point.dto.response_dto import ResponseDTO
 from app.infrastructure.entry_point.utils.api_response import ApiResponse
-
-
 
 logger = logging.getLogger("Auth Handler")
 
@@ -37,14 +35,14 @@ def create_user(
     user_usecase: UserUseCase = Depends(Provide[Container.user_usecase])
 ):
     """
-    Crea un nuevo usuario en el sistema
+    Creates a new user in the system.
     
     Args:
-        user_dto (NewUserInput): El objeto de transferencia de datos que contiene los detalles del usuario.
-        user_usecase (UserUseCase): El UseCase del User.
+        user_dto (NewUserInput): The data transfer object containing the user's details.
+        user_usecase (UserUseCase): The User UseCase.
 
     Returns:
-        ResponseDTO: Un objeto de respuesta con los datos de la operación.
+        ResponseDTO: A response object containing the operation data.
     """
     
     logger.info("Init create-user handler")
@@ -53,7 +51,6 @@ def create_user(
     except ValueError as e:
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOD01, str(e))
         return  JSONResponse(status_code=400, content=response_code)
-
 
     user = user_mapper.map_user_dto_to_user(user_dto)
 
@@ -86,14 +83,14 @@ def get_user(
     user_usecase: UserUseCase = Depends(Provide(Container.user_usecase))
 ):
     """
-    Obtiene los detalles del usuario.
+    Retrieves the details of a user.
 
     Args:
-        get_user_dto (GetUser): El objeto de transferencia de datos que contiene los detalles necesarios del usuario.
-        user_usecase (UserUseCase): El UseCase del User.
+        get_user_dto (GetUser): The data transfer object containing the necessary user details.
+        user_usecase (UserUseCase): The User UseCase.
 
     Returns:
-        ResponseDTO: Un objeto de respuesta con los datos del usuario.
+        ResponseDTO: A response object containing the user's data.
     """
     logger.info("Init get-user handler")
     try:
@@ -115,4 +112,3 @@ def get_user(
         logger.error(f"Unhandled exception: {e}")
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)
         return JSONResponse(status_code=500, content=response_code)
-    

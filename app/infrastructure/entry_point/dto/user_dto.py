@@ -16,4 +16,8 @@ class UserOutput(BaseModel):
 class GetUser(BaseModel):
     id: int
     email: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
     

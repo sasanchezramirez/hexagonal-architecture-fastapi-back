@@ -6,6 +6,7 @@ from app.domain.model.user import User
 from app.domain.model.util.custom_exceptions import CustomException
 from app.domain.model.util.response_codes import ResponseCodeEnum
 from app.domain.gateway.persistence_gateway import PersistenceGateway
+from app.domain.usecase.util.security import  hash_password
 
 logger = logging.getLogger("User UseCase")
 
@@ -18,6 +19,7 @@ class UserUseCase:
     def create_user(self, user: User):
         logger.info("Init create user usecase")
         user.creation_date = datetime.now().isoformat()
+        user.password = hash_password(user.password)
         try:
             created_user = self.persistence_gateway.create_user(user)
             return created_user

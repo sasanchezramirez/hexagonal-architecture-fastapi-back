@@ -8,6 +8,10 @@ class ResponseCodeEnum(Enum):
 
     KOD01 = (400, "Invalid email")
     KOD02 = (400, "Invalid credentials")
+    KOD03 = (401, "Token expired")
+    KOD04 = (401, "Invalid token")
+
+
 
     KOG02 = (500, "A database error occurred")
     KOG01 = (500, "Internal Server Error")

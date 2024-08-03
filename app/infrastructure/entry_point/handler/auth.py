@@ -11,7 +11,7 @@ from app.domain.usecase.auth_usecase import AuthUseCase
 
 from app.application.container import Container
 from app.domain.model.util.custom_exceptions import CustomException
-
+from app.domain.usecase.util.jwt import get_current_user
 from app.domain.model.util.response_codes import ResponseCodeEnum
 from app.infrastructure.entry_point.dto.response_dto import ResponseDTO
 from app.infrastructure.entry_point.utils.api_response import ApiResponse
@@ -82,7 +82,8 @@ def create_user(
 @inject
 def get_user(
     get_user_dto: GetUser,
-    user_usecase: UserUseCase = Depends(Provide(Container.user_usecase))
+    user_usecase: UserUseCase = Depends(Provide(Container.user_usecase)),
+    current_user: str = Depends(get_current_user)
 ):
     """
     Retrieves the details of a user.

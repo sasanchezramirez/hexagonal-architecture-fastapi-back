@@ -5,8 +5,10 @@ import logging
 from fastapi import APIRouter, Depends 
 from fastapi.responses import JSONResponse
 from dependency_injector.wiring import inject, Provide
-from app.infrastructure.entry_point.dto.user_dto import NewUserInput, GetUser
+from app.infrastructure.entry_point.dto.user_dto import NewUserInput, GetUser, LoginInput, Token
 from app.domain.usecase.user_usecase import UserUseCase
+from app.domain.usecase.auth_usecase import AuthUseCase
+
 from app.application.container import Container
 from app.domain.model.util.custom_exceptions import CustomException
 
@@ -105,6 +107,53 @@ def get_user(
         user = user_usecase.get_user(user)
         response_data = user_mapper.map_user_to_user_output_dto(user)
         return ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
+    except CustomException as e:
+        response_code = e.to_dict()
+        return  JSONResponse(status_code=e.http_status, content=response_code)
+    except Exception as e:
+        logger.error(f"Unhandled exception: {e}")
+        response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)
+        return JSONResponse(status_code=500, content=response_code)
+
+@router.post('/login', 
+    response_model=ResponseDTO,
+    responses={
+        200: {"description": "Operation successful", "model": ResponseDTO},
+        400: {"description": "Validation Error", "model": ResponseDTO},
+        500: {"description": "Internal Server Error", "model": ResponseDTO},
+    }
+)
+@inject
+def login(
+    login_dto: LoginInput,
+    auth_usecase: AuthUseCase = Depends(Provide[Container.auth_usecase])
+):
+    """
+    Logs in a user.
+    
+    Args:
+        login_dto (LoginInput): The data transfer object containing the user's details.
+        auth_usecase (AuthUseCase): The Auth UseCase.
+
+    Returns:
+        TokenDTO: A response object containing the token.
+    """
+    logger.info("Init login handler")
+    try:
+        validator.validate_login(login_dto)
+    except ValueError as e:
+        response_code = ApiResponse.create_response(ResponseCodeEnum.KOD01, str(e))
+        return  JSONResponse(status_code=400, content=response_code)
+    
+    user = user_mapper.map_login_dto_to_user(login_dto)
+    
+    try:
+        token = auth_usecase.authenticate_user(user)
+        if token:
+            token = Token(access_token=token, token_type="bearer")
+            return ApiResponse.create_response(ResponseCodeEnum.KO000, token)
+        else:
+            return ApiResponse.create_response(ResponseCodeEnum.KOD02)
     except CustomException as e:
         response_code = e.to_dict()
         return  JSONResponse(status_code=e.http_status, content=response_code)

@@ -7,6 +7,7 @@ class ResponseCodeEnum(Enum):
     KOU04 = (400, "Invalid status ID")
 
     KOD01 = (400, "Invalid email")
+    KOD02 = (400, "Invalid credentials")
 
     KOG02 = (500, "A database error occurred")
     KOG01 = (500, "Internal Server Error")

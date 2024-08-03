@@ -20,7 +20,7 @@ class AuthUseCase:
     def authenticate_user(self, user: User):
         user_validated = self.get_user(user)
         if user and verify_password(user.password, user_validated.password):
-            return create_access_token({"sub": user.username})
+            return create_access_token({"sub": user.email})
         return None   
 
         

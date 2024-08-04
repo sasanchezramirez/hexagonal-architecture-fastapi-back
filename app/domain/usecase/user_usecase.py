@@ -53,6 +53,20 @@ class UserUseCase:
             except Exception as e:
                 logger.error(f"Unhandled error: {e}")
                 raise CustomException(ResponseCodeEnum.KOG01)
+            
+    def update_user(self, user: User):
+        logger.info("Init update user usecase")
+        user.password = hash_password(user.password) if user.password else user.password
+        try:
+            updated_user = self.persistence_gateway.update_user(user)
+            return updated_user
+        except CustomException as e:
+            logger.error(f"Custom exception: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"Unhandled error: {e}")
+            raise CustomException(ResponseCodeEnum.KOG01)
+
 
 
 

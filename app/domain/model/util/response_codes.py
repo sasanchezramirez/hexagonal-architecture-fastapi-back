@@ -5,6 +5,8 @@ class ResponseCodeEnum(Enum):
     KOU02 = (404, "User not found")
     KOU03 = (400, "Invalid profile ID")
     KOU04 = (400, "Invalid status ID")
+    KOU05 = (400, "Invalid ID")
+    KOU06 = (400, "Invalid request")
 
     KOD01 = (400, "Invalid email")
     KOD02 = (400, "Invalid credentials")

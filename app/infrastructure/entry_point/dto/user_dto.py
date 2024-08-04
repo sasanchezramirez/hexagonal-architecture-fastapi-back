@@ -24,3 +24,10 @@ class Token(BaseModel):
 class LoginInput(BaseModel):
     email: str
     password: str
+
+class UpdateUserInput(BaseModel):
+    id: int
+    email: str
+    password: str
+    profile_id: int
+    status_id: int

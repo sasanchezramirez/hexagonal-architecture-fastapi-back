@@ -53,3 +53,20 @@ class Persistence(PersistenceGateway):
             logger.error(f"Error getting user: {e}")
             self.session.rollback()
             raise CustomException(ResponseCodeEnum.KOG02)
+    
+    def update_user(self, user: User):
+        try:
+            existing_user = self.user_repository.get_user_by_id(user.id)
+            if not existing_user:
+                raise CustomException(ResponseCodeEnum.KOU02)
+            user_entity = mapper.map_user_update_to_user_entity(user, existing_user)
+            updated_user_entity = self.user_repository.update_user(user_entity)
+            self.session.commit()
+            return mapper.map_user_entity_to_user(updated_user_entity)
+        except CustomException as e:
+            self.session.rollback()
+            raise e
+        except SQLAlchemyError as e:
+            logger.error(f"Error updating user: {e}")
+            self.session.rollback()
+            raise CustomException(ResponseCodeEnum.KOG02)

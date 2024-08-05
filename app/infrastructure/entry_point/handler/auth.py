@@ -32,7 +32,7 @@ router = APIRouter(
     }
 )
 @inject
-def create_user(
+async def create_user(
     user_dto: NewUserInput,
     user_usecase: UserUseCase = Depends(Provide[Container.user_usecase])
 ):
@@ -52,17 +52,17 @@ def create_user(
         validator.validate_new_user(user_dto)
     except ValueError as e:
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOD01, str(e))
-        return  JSONResponse(status_code=400, content=response_code)
+        return JSONResponse(status_code=400, content=response_code)
 
     user = user_mapper.map_user_dto_to_user(user_dto)
 
     try:
-        user = user_usecase.create_user(user)
+        user = await user_usecase.create_user(user)
         response_data = user_mapper.map_user_to_user_output_dto(user)
         return ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
     except CustomException as e:
         response_code = e.to_dict()
-        return  JSONResponse(status_code=e.http_status, content=response_code)
+        return JSONResponse(status_code=e.http_status, content=response_code)
     except Exception as e:
         logger.error(f"Unhandled exception: {e}")
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)
@@ -80,7 +80,7 @@ def create_user(
     }
 )
 @inject
-def get_user(
+async def get_user(
     get_user_dto: GetUser,
     user_usecase: UserUseCase = Depends(Provide(Container.user_usecase)),
     current_user: str = Depends(get_current_user)
@@ -100,17 +100,17 @@ def get_user(
         validator.validate_get_user(get_user_dto)
     except ValueError as e:
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOD01, str(e))
-        return  JSONResponse(status_code=400, content=response_code)
+        return JSONResponse(status_code=400, content=response_code)
     
     user = user_mapper.map_get_user_dto_to_user(get_user_dto)
 
     try:
-        user = user_usecase.get_user(user)
+        user = await user_usecase.get_user(user)
         response_data = user_mapper.map_user_to_user_output_dto(user)
         return ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
     except CustomException as e:
         response_code = e.to_dict()
-        return  JSONResponse(status_code=e.http_status, content=response_code)
+        return JSONResponse(status_code=e.http_status, content=response_code)
     except Exception as e:
         logger.error(f"Unhandled exception: {e}")
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)
@@ -125,7 +125,7 @@ def get_user(
     }
 )
 @inject
-def login(
+async def login(
     login_dto: LoginInput,
     auth_usecase: AuthUseCase = Depends(Provide[Container.auth_usecase])
 ):
@@ -144,12 +144,12 @@ def login(
         validator.validate_login(login_dto)
     except ValueError as e:
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOD01, str(e))
-        return  JSONResponse(status_code=400, content=response_code)
+        return JSONResponse(status_code=400, content=response_code)
     
     user = user_mapper.map_login_dto_to_user(login_dto)
     
     try:
-        token = auth_usecase.authenticate_user(user)
+        token = await auth_usecase.authenticate_user(user)
         if token:
             token = Token(access_token=token, token_type="bearer")
             return ApiResponse.create_response(ResponseCodeEnum.KO000, token)
@@ -157,7 +157,7 @@ def login(
             return ApiResponse.create_response(ResponseCodeEnum.KOD02)
     except CustomException as e:
         response_code = e.to_dict()
-        return  JSONResponse(status_code=e.http_status, content=response_code)
+        return JSONResponse(status_code=e.http_status, content=response_code)
     except Exception as e:
         logger.error(f"Unhandled exception: {e}")
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)
@@ -172,7 +172,7 @@ def login(
     }
 )  
 @inject
-def update_user(
+async def update_user(
     update_user_dto: UpdateUserInput,
     user_usecase: UserUseCase = Depends(Provide(Container.user_usecase)),
     current_user: str = Depends(get_current_user)
@@ -194,17 +194,17 @@ def update_user(
         validator.validate_update_user(update_user_dto)
     except ValueError as e:
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOU06, str(e))
-        return  JSONResponse(status_code=400, content=response_code)
+        return JSONResponse(status_code=400, content=response_code)
     
     user = user_mapper.map_update_user_dto_to_user(update_user_dto)
 
     try:
-        user = user_usecase.update_user(user)
+        user = await user_usecase.update_user(user)
         response_data = user_mapper.map_user_to_user_output_dto(user)
         return ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
     except CustomException as e:
         response_code = e.to_dict()
-        return  JSONResponse(status_code=e.http_status, content=response_code)
+        return JSONResponse(status_code=e.http_status, content=response_code)
     except Exception as e:
         logger.error(f"Unhandled exception: {e}")
         response_code = ApiResponse.create_response(ResponseCodeEnum.KOG01)

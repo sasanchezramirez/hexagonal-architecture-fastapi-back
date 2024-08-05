@@ -181,7 +181,9 @@ def update_user(
     Updates the details of a user.
 
     Args:
-        update_user_dto (UpdateUserInput): The data transfer object containing the necessary user details.
+        update_user_dto (UpdateUserInput): The data transfer object containing the necessary user details. 
+            If a parameter should not be updated, send it as an empty string or zero as appropriate.
+            The `id` field is always mandatory.
         user_usecase (UserUseCase): The User UseCase.
 
     Returns:

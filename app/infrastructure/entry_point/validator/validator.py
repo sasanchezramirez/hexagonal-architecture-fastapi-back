@@ -1,4 +1,5 @@
 from typing import Final
+import re
 
 from pydantic import ValidationError, EmailStr
 from app.infrastructure.entry_point.dto.user_dto import (
@@ -7,6 +8,20 @@ from app.infrastructure.entry_point.dto.user_dto import (
     LoginInput,
     UpdateUserInput
 )
+
+
+def is_valid_email(email: str) -> bool:
+    """
+    Valida el formato de un correo electrónico de manera más flexible.
+    
+    Args:
+        email: Correo electrónico a validar
+        
+    Returns:
+        bool: True si el formato es válido
+    """
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
 
 
 def validate_new_user(user: NewUserInput) -> bool:
@@ -25,9 +40,7 @@ def validate_new_user(user: NewUserInput) -> bool:
     if not user.email:
         raise ValueError("El correo electrónico es obligatorio")
     
-    try:
-        EmailStr.validate(user.email)
-    except ValidationError:
+    if not is_valid_email(user.email):
         raise ValueError("El formato del correo electrónico no es válido")
     
     if not user.password or len(user.password) < 8:
@@ -58,11 +71,8 @@ def validate_get_user(user: GetUser) -> bool:
     if not user.id and not user.email:
         raise ValueError("Debe proporcionar un ID o correo electrónico")
     
-    if user.email:
-        try:
-            EmailStr.validate(user.email)
-        except ValidationError:
-            raise ValueError("El formato del correo electrónico no es válido")
+    if user.email and not is_valid_email(user.email):
+        raise ValueError("El formato del correo electrónico no es válido")
     
     return True
 
@@ -83,9 +93,7 @@ def validate_login(user: LoginInput) -> bool:
     if not user.email:
         raise ValueError("El correo electrónico es obligatorio")
     
-    try:
-        EmailStr.validate(user.email)
-    except ValidationError:
+    if not is_valid_email(user.email):
         raise ValueError("El formato del correo electrónico no es válido")
     
     if not user.password or len(user.password) < 8:
@@ -110,11 +118,8 @@ def validate_update_user(user: UpdateUserInput) -> bool:
     if not user.id or user.id <= 0:
         raise ValueError("El ID del usuario es obligatorio y debe ser mayor que 0")
     
-    if user.email:
-        try:
-            EmailStr.validate(user.email)
-        except ValidationError:
-            raise ValueError("El formato del correo electrónico no es válido")
+    if user.email and not is_valid_email(user.email):
+        raise ValueError("El formato del correo electrónico no es válido")
     
     if user.password and len(user.password) < 8:
         raise ValueError("La contraseña debe tener al menos 8 caracteres")

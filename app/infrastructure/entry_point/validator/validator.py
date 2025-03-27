@@ -1,28 +1,128 @@
-from pydantic import ValidationError
-from app.infrastructure.entry_point.dto.user_dto import NewUserInput, GetUser, LoginInput
+from typing import Final
 
-def validate_new_user(user: NewUserInput):
-    if not user.email or '@' not in user.email:
-        raise ValueError("Email is invalid")
-    return True
+from pydantic import ValidationError, EmailStr
+from app.infrastructure.entry_point.dto.user_dto import (
+    NewUserInput,
+    GetUser,
+    LoginInput,
+    UpdateUserInput
+)
 
-def validate_get_user(user: GetUser):
+
+def validate_new_user(user: NewUserInput) -> bool:
+    """
+    Valida los datos de un nuevo usuario.
+
+    Args:
+        user: DTO con los datos del nuevo usuario
+
+    Returns:
+        bool: True si la validación es exitosa
+
+    Raises:
+        ValueError: Si los datos no son válidos
+    """
     if not user.email:
-        return True
-    elif '@' not in user.email:
-        raise ValueError("Email is invalid")
+        raise ValueError("El correo electrónico es obligatorio")
+    
+    try:
+        EmailStr.validate(user.email)
+    except ValidationError:
+        raise ValueError("El formato del correo electrónico no es válido")
+    
+    if not user.password or len(user.password) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    
+    if not user.profile_id or user.profile_id <= 0:
+        raise ValueError("El ID del perfil debe ser mayor que 0")
+    
+    if not user.status_id or user.status_id <= 0:
+        raise ValueError("El ID del estado debe ser mayor que 0")
+    
     return True
 
-def validate_login(user: LoginInput):
-    if not user.email or '@' not in user.email:
-        raise ValueError("Email is invalid")
+
+def validate_get_user(user: GetUser) -> bool:
+    """
+    Valida los criterios de búsqueda de usuario.
+
+    Args:
+        user: DTO con los criterios de búsqueda
+
+    Returns:
+        bool: True si la validación es exitosa
+
+    Raises:
+        ValueError: Si los datos no son válidos
+    """
+    if not user.id and not user.email:
+        raise ValueError("Debe proporcionar un ID o correo electrónico")
+    
+    if user.email:
+        try:
+            EmailStr.validate(user.email)
+        except ValidationError:
+            raise ValueError("El formato del correo electrónico no es válido")
+    
     return True
 
-def validate_update_user(user: NewUserInput):
+
+def validate_login(user: LoginInput) -> bool:
+    """
+    Valida las credenciales de inicio de sesión.
+
+    Args:
+        user: DTO con las credenciales de login
+
+    Returns:
+        bool: True si la validación es exitosa
+
+    Raises:
+        ValueError: Si los datos no son válidos
+    """
     if not user.email:
-        return True
-    elif '@' not in user.email:
-        raise ValueError("Email is invalid")
-    elif user.id == 0: 
-        raise ValueError("User ID is obligatory")
+        raise ValueError("El correo electrónico es obligatorio")
+    
+    try:
+        EmailStr.validate(user.email)
+    except ValidationError:
+        raise ValueError("El formato del correo electrónico no es válido")
+    
+    if not user.password or len(user.password) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    
+    return True
+
+
+def validate_update_user(user: UpdateUserInput) -> bool:
+    """
+    Valida los datos de actualización de usuario.
+
+    Args:
+        user: DTO con los datos a actualizar
+
+    Returns:
+        bool: True si la validación es exitosa
+
+    Raises:
+        ValueError: Si los datos no son válidos
+    """
+    if not user.id or user.id <= 0:
+        raise ValueError("El ID del usuario es obligatorio y debe ser mayor que 0")
+    
+    if user.email:
+        try:
+            EmailStr.validate(user.email)
+        except ValidationError:
+            raise ValueError("El formato del correo electrónico no es válido")
+    
+    if user.password and len(user.password) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    
+    if user.profile_id is not None and user.profile_id <= 0:
+        raise ValueError("El ID del perfil debe ser mayor que 0")
+    
+    if user.status_id is not None and user.status_id <= 0:
+        raise ValueError("El ID del estado debe ser mayor que 0")
+    
     return True

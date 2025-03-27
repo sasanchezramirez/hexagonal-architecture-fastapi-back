@@ -1,70 +1,108 @@
 import logging
-
-
+from typing import Final
 from datetime import datetime
+
 from app.domain.model.user import User
 from app.domain.model.util.custom_exceptions import CustomException
 from app.domain.model.util.response_codes import ResponseCodeEnum
 from app.domain.gateway.persistence_gateway import PersistenceGateway
-from app.domain.usecase.util.security import  hash_password
+from app.domain.usecase.util.security import hash_password
 
-logger = logging.getLogger("User UseCase")
+
+logger: Final[logging.Logger] = logging.getLogger("User UseCase")
 
 
 class UserUseCase:
-    def __init__(self, persistence_gateway: PersistenceGateway):
-        self.persistence_gateway = persistence_gateway
-        
+    """
+    Caso de uso para la gestión de usuarios.
+    
+    Esta clase maneja la lógica de negocio relacionada con las operaciones
+    CRUD de usuarios, incluyendo la creación, lectura, actualización y
+    el manejo seguro de contraseñas.
+    """
 
-    def create_user(self, user: User):
-        logger.info("Init create user usecase")
-        user.creation_date = datetime.now().isoformat()
-        user.password = hash_password(user.password)
+    def __init__(self, persistence_gateway: PersistenceGateway) -> None:
+        """
+        Inicializa el caso de uso de usuario.
+
+        Args:
+            persistence_gateway: Gateway para operaciones de persistencia
+        """
+        self.persistence_gateway: Final[PersistenceGateway] = persistence_gateway
+
+    def create_user(self, user: User) -> User:
+        """
+        Crea un nuevo usuario en el sistema.
+
+        Args:
+            user: Usuario a crear
+
+        Returns:
+            User: Usuario creado con ID asignado
+
+        Raises:
+            CustomException: Si hay un error al crear el usuario
+        """
+        logger.info("Iniciando creación de usuario")
         try:
-            created_user = self.persistence_gateway.create_user(user)
-            return created_user
+            user.creation_date = datetime.now().isoformat()
+            user.password = hash_password(user.password)
+            return self.persistence_gateway.create_user(user)
         except CustomException as e:
-            logger.error(f"Custom exception: {e}")
-            raise e
+            logger.error(f"Error al crear usuario: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Unhandled error: {e}")
+            logger.error(f"Error no manejado al crear usuario: {e}")
             raise CustomException(ResponseCodeEnum.KOG01)
 
-        
-    def get_user(self, user_to_get: User):
-        logger.info("Init get user usecase")
-        if user_to_get.id and user_to_get.id != 0:
-            try:
-                user = self.persistence_gateway.get_user_by_id(user_to_get.id)
-                return user
-            except CustomException as e:
-                logger.error(f"Custom exception: {e}")
-                raise e
-            except Exception as e:
-                logger.error(f"Unhandled error: {e}")
-                raise CustomException(ResponseCodeEnum.KOG01)
-        else:
-            try:
-                user = self.persistence_gateway.get_user_by_email(user_to_get.email)
-                return user
-            except CustomException as e:
-                logger.error(f"Custom exception: {e}")
-                raise e
-            except Exception as e:
-                logger.error(f"Unhandled error: {e}")
-                raise CustomException(ResponseCodeEnum.KOG01)
-            
-    def update_user(self, user: User):
-        logger.info("Init update user usecase")
-        user.password = hash_password(user.password) if user.password else user.password
+    def get_user(self, user_to_get: User) -> User:
+        """
+        Obtiene un usuario por su ID o correo electrónico.
+
+        Args:
+            user_to_get: Usuario con ID o correo electrónico a buscar
+
+        Returns:
+            User: Usuario encontrado
+
+        Raises:
+            CustomException: Si hay un error al obtener el usuario
+        """
+        logger.info("Iniciando búsqueda de usuario")
         try:
-            updated_user = self.persistence_gateway.update_user(user)
-            return updated_user
+            if user_to_get.id and user_to_get.id != 0:
+                return self.persistence_gateway.get_user_by_id(user_to_get.id)
+            return self.persistence_gateway.get_user_by_email(user_to_get.email)
         except CustomException as e:
-            logger.error(f"Custom exception: {e}")
-            raise e
+            logger.error(f"Error al obtener usuario: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Unhandled error: {e}")
+            logger.error(f"Error no manejado al obtener usuario: {e}")
+            raise CustomException(ResponseCodeEnum.KOG01)
+
+    def update_user(self, user: User) -> User:
+        """
+        Actualiza los datos de un usuario existente.
+
+        Args:
+            user: Usuario con los datos a actualizar
+
+        Returns:
+            User: Usuario actualizado
+
+        Raises:
+            CustomException: Si hay un error al actualizar el usuario
+        """
+        logger.info("Iniciando actualización de usuario")
+        try:
+            if user.password:
+                user.password = hash_password(user.password)
+            return self.persistence_gateway.update_user(user)
+        except CustomException as e:
+            logger.error(f"Error al actualizar usuario: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error no manejado al actualizar usuario: {e}")
             raise CustomException(ResponseCodeEnum.KOG01)
 
 

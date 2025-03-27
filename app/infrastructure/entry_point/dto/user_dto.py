@@ -1,33 +1,133 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
+
 
 class NewUserInput(BaseModel):
-    email: str
-    password: str
-    profile_id: int
-    status_id: int
+    """
+    DTO para la creación de un nuevo usuario.
+    """
+    email: EmailStr = Field(
+        description="Correo electrónico del usuario",
+        example="usuario@ejemplo.com"
+    )
+    password: str = Field(
+        description="Contraseña del usuario",
+        min_length=8,
+        example="contraseña123"
+    )
+    profile_id: int = Field(
+        description="ID del perfil del usuario",
+        gt=0,
+        example=1
+    )
+    status_id: int = Field(
+        description="ID del estado del usuario",
+        gt=0,
+        example=1
+    )
+
 
 class UserOutput(BaseModel):
-    id: int
-    email: str
-    creation_date: str
-    profile_id: int
-    status_id: int
+    """
+    DTO para la respuesta de datos de usuario.
+    """
+    id: int = Field(
+        description="Identificador único del usuario",
+        example=1
+    )
+    email: EmailStr = Field(
+        description="Correo electrónico del usuario",
+        example="usuario@ejemplo.com"
+    )
+    creation_date: str = Field(
+        description="Fecha de creación del usuario",
+        example="2024-03-27T12:00:00"
+    )
+    profile_id: int = Field(
+        description="ID del perfil del usuario",
+        example=1
+    )
+    status_id: int = Field(
+        description="ID del estado del usuario",
+        example=1
+    )
+
 
 class GetUser(BaseModel):
-    id: int
-    email: str
+    """
+    DTO para la búsqueda de un usuario.
+    """
+    id: Optional[int] = Field(
+        default=None,
+        description="ID del usuario a buscar",
+        example=1
+    )
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="Correo electrónico del usuario a buscar",
+        example="usuario@ejemplo.com"
+    )
+
 
 class Token(BaseModel):
-    access_token: str
-    token_type: str
+    """
+    DTO para la respuesta de autenticación.
+    """
+    access_token: str = Field(
+        description="Token de acceso JWT",
+        example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+    )
+    token_type: str = Field(
+        description="Tipo de token",
+        default="bearer",
+        example="bearer"
+    )
+
 
 class LoginInput(BaseModel):
-    email: str
-    password: str
+    """
+    DTO para el inicio de sesión.
+    """
+    email: EmailStr = Field(
+        description="Correo electrónico del usuario",
+        example="usuario@ejemplo.com"
+    )
+    password: str = Field(
+        description="Contraseña del usuario",
+        min_length=8,
+        example="contraseña123"
+    )
+
 
 class UpdateUserInput(BaseModel):
-    id: int
-    email: str
-    password: str
-    profile_id: int
-    status_id: int
+    """
+    DTO para la actualización de un usuario.
+    """
+    id: int = Field(
+        description="ID del usuario a actualizar",
+        gt=0,
+        example=1
+    )
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="Nuevo correo electrónico del usuario",
+        example="nuevo@ejemplo.com"
+    )
+    password: Optional[str] = Field(
+        default=None,
+        description="Nueva contraseña del usuario",
+        min_length=8,
+        example="nuevaContraseña123"
+    )
+    profile_id: Optional[int] = Field(
+        default=None,
+        description="Nuevo ID del perfil del usuario",
+        gt=0,
+        example=2
+    )
+    status_id: Optional[int] = Field(
+        default=None,
+        description="Nuevo ID del estado del usuario",
+        gt=0,
+        example=2
+    )

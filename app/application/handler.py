@@ -1,32 +1,68 @@
 import os
 from types import ModuleType
-from typing import Iterator
+from typing import Iterator, Final, List, Set
+
 
 class Handlers:
-    handlers_base_path = ('app', 'infrastructure', 'entry_point', 'handler')
-    ignored = ('__init__.py', '__pycache__')
+    """
+    Clase responsable de cargar y gestionar los handlers de la aplicación.
+    
+    Esta clase implementa un cargador dinámico de handlers que se encuentran
+    en el directorio de entry points.
+    """
+    
+    HANDLERS_BASE_PATH: Final[tuple] = ('app', 'infrastructure', 'entry_point', 'handler')
+    IGNORED_FILES: Final[Set[str]] = {'__init__.py', '__pycache__'}
 
     @classmethod
-    def __all_module_names(cls) -> list:
-        return list(
-            filter (
-                lambda module: module not in cls.ignored, os.listdir('/'.join(cls.handlers_base_path))
-            )
-        )
+    def _get_all_module_names(cls) -> List[str]:
+        """
+        Obtiene la lista de nombres de módulos de handlers disponibles.
+        
+        Returns:
+            List[str]: Lista de nombres de módulos
+        """
+        return [
+            module for module in os.listdir('/'.join(cls.HANDLERS_BASE_PATH))
+            if module not in cls.IGNORED_FILES
+        ]
     
     @classmethod
-    def __module_namespace(cls, handler_name: str) -> str:
-        return '%s.%s' % ('.'. join(cls.handlers_base_path), handler_name)
+    def _get_module_namespace(cls, handler_name: str) -> str:
+        """
+        Construye el namespace completo para un módulo handler.
+        
+        Args:
+            handler_name: Nombre del archivo handler
+            
+        Returns:
+            str: Namespace completo del módulo
+        """
+        return '.'.join([*cls.HANDLERS_BASE_PATH, handler_name[:-3]])
     
     @classmethod
     def iterator(cls) -> Iterator[ModuleType]:
-        for module in cls.__all_module_names():
-            import importlib
-            handler = importlib.import_module(cls.__module_namespace(module[:-3]))
+        """
+        Itera sobre todos los módulos de handlers disponibles.
+        
+        Returns:
+            Iterator[ModuleType]: Iterador de módulos de handlers
+        """
+        import importlib
+        
+        for module in cls._get_all_module_names():
+            handler = importlib.import_module(cls._get_module_namespace(module))
             yield handler
     
     @classmethod
-    def modules(cls) -> map:
-        return map(
-            lambda module: cls.__module_namespace(module[:-3]), cls.__all_module_names()
+    def get_module_namespaces(cls) -> Iterator[str]:
+        """
+        Obtiene los namespaces de todos los módulos de handlers.
+        
+        Returns:
+            Iterator[str]: Iterador de namespaces de módulos
+        """
+        return (
+            cls._get_module_namespace(module)
+            for module in cls._get_all_module_names()
         )

@@ -4,7 +4,7 @@ from typing import Optional, Final
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.infrastructure.driven_adapter.persistence.entity.user_entity import User_entity
+from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
 from app.infrastructure.driven_adapter.persistence.repository.user_repository import UserRepository
 from app.domain.model.user import User
 from app.domain.gateway.persistence_gateway import PersistenceGateway
@@ -51,7 +51,7 @@ class Persistence(PersistenceGateway):
             CustomException: Si hay un error en la validación o en la operación de base de datos.
         """
         try:
-            user_entity = User_entity(user)
+            user_entity = UserEntity(user)
             created_user_entity = self.user_repository.create_user(user_entity)
             self.session.commit()
             return mapper.map_user_entity_to_user(created_user_entity)

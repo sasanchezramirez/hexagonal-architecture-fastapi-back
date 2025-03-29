@@ -1,54 +1,150 @@
-# Hexagonal Architecture Archetype with FastAPI
+# Arquitectura Hexagonal con FastAPI
 
-This project provides an archetype for implementing a Hexagonal Architecture using FastAPI. It serves as a template for building scalable and maintainable web applications by adhering to the principles of Hexagonal Architecture, also known as Ports and Adapters architecture.
+Este proyecto implementa una arquitectura hexagonal (también conocida como puertos y adaptadores) utilizando FastAPI como framework web. La arquitectura está diseñada para ser mantenible, escalable y fácil de probar.
 
-## Project Structure
+## 🏗️ Arquitectura
 
-The project is organized into several key modules:
+El proyecto sigue los principios de la arquitectura hexagonal, dividiendo la aplicación en tres capas principales:
 
-1. **Domain**: Contains the core business logic, including use cases and domain models. This layer is independent of external frameworks and libraries.
+### 1. Dominio (Domain)
+- **Modelos**: Entidades y objetos de valor que representan el núcleo del negocio
+- **Casos de Uso**: Lógica de negocio principal
+- **Puertos**: Interfaces que definen las interacciones con el exterior
 
-2. **Application**: This layer orchestrates the business logic by handling use cases and managing the flow of data between the domain and infrastructure layers. It includes handlers and application-level services.
+### 2. Aplicación (Application)
+- **Adaptadores Primarios**: Manejan las entradas (HTTP, CLI, etc.)
+- **Adaptadores Secundarios**: Manejan las salidas (base de datos, servicios externos, etc.)
 
-3. **Driven adapters**: Manages the interaction with external systems, such as databases, external APIs, and other services. This layer includes data persistence, API clients, and other integrations.
+### 3. Infraestructura (Infrastructure)
+- Implementaciones concretas de los puertos
+- Configuración y conexiones externas
 
-4. **Entry Points**: The external interface of the application, including API endpoints defined using FastAPI. This layer handles HTTP requests and responses, interacting with the application layer to process business logic.
+## 🚀 Características
 
-## Key Features
+- **FastAPI**: Framework web moderno y rápido
+- **SQLAlchemy**: ORM para manejo de base de datos
+- **Pydantic**: Validación de datos y serialización
+- **JWT**: Autenticación y autorización
+- **Docker**: Contenedorización de la aplicación
+- **Arquitectura Hexagonal**: Separación clara de responsabilidades
 
-- **FastAPI Integration**: Utilizes FastAPI for creating robust and efficient APIs, benefiting from its automatic generation of OpenAPI and JSON schema documentation.
+## 📋 Prerrequisitos
 
-- **Dependency Injection**: Implements the `dependency_injector` library to manage dependencies, ensuring loose coupling between components and enhancing testability.
+- Python 3.8+
+- Docker y Docker Compose
+- PostgreSQL (si se ejecuta localmente)
 
-- **Custom Exception Handling**: Provides a structured approach for handling custom exceptions and error responses, improving the consistency and readability of the API.
+## 🛠️ Instalación
 
-- **Data Transfer Objects (DTOs)**: Uses DTOs for structured data exchange between the client and the server, ensuring that only the necessary information is exposed.
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/tu-usuario/hexagonal-architecture-fastapi-back.git
+cd hexagonal-architecture-fastapi-back
+```
 
-## How to Use
+2. Construir y ejecutar con Docker:
+```bash
+docker-compose build --no-cache
+docker-compose up
+```
 
-1. **Setup**: Clone the repository and set up a virtual environment. Install the required dependencies using `pip`:
+3. Acceder a la documentación de la API:
+```
+http://localhost:8000/docs
+```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🔧 Configuración
 
-2. **Running the Application**: Start the FastAPI application using Uvicorn:
+El proyecto utiliza variables de entorno para la configuración. Crea un archivo `.env` en la raíz del proyecto:
 
-   ```bash
-    uvicorn app.main:app --reload
-   ```
-3. **API Documentation**: Access the interactive API documentation at `http://127.0.0.1:8000/docs` for the OpenAPI interface, or at `http://127.0.0.1:8000/redoc` for the ReDoc interface. These endpoints provide a detailed view of the available API endpoints, request/response schemas, and other useful information.
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+JWT_SECRET_KEY=tu_clave_secreta
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
 
-4. **Extending the Archetype**: The provided structure can be extended by adding new use cases, domain models, infrastructure services, and API endpoints as needed. The modular architecture makes it easy to add new functionality or modify existing components without affecting other parts of the system.
+## 📚 Endpoints
 
-## Contributing
+### Autenticación
+- `POST /auth/login`: Iniciar sesión
+- `POST /auth/create-user`: Crear nuevo usuario
+- `GET /auth/get-user`: Obtener usuario por ID o email
+- `PUT /auth/update-user`: Actualizar usuario existente
 
-Contributions are welcome! If you have ideas for improving this archetype or find any issues, please feel free to submit a pull request or open an issue. We appreciate any feedback or suggestions to enhance the functionality and usability of this template.
+### Usuarios
+- `GET /users/{user_id}`: Obtener usuario por ID
+- `GET /users/email/{email}`: Obtener usuario por email
+- `PUT /users/{user_id}`: Actualizar usuario
 
-## License
+## 🧪 Testing
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+Para ejecutar las pruebas:
 
----
+```bash
+# Instalar dependencias de desarrollo
+pip install -r requirements-dev.txt
 
-This archetype aims to streamline the development process by providing a well-structured foundation based on Hexagonal Architecture principles. It is designed to be adaptable to various types of projects and requirements, ensuring a clean separation of concerns and ease of maintenance.
+# Ejecutar pruebas
+pytest
+```
+
+## 📦 Estructura del Proyecto
+
+```
+app/
+├── domain/
+│   ├── model/
+│   │   ├── user.py
+│   │   └── util/
+│   ├── usecase/
+│   │   └── user_usecase.py
+│   └── gateway/
+│       └── persistence_gateway.py
+├── infrastructure/
+│   ├── entry_point/
+│   │   ├── api/
+│   │   ├── dto/
+│   │   └── mapper/
+│   └── driven_adapter/
+│       └── persistence/
+└── main.py
+```
+
+## 🔒 Seguridad
+
+- Autenticación basada en JWT
+- Contraseñas hasheadas con bcrypt
+- Validación de datos con Pydantic
+- Manejo seguro de errores
+
+## 📝 Convenciones de Código
+
+- PEP 8 para estilo de código
+- Docstrings en todas las funciones y clases
+- Tipado estático con type hints
+- Nombres descriptivos para variables y funciones
+
+## 🤝 Contribución
+
+1. Fork el repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 👥 Autores
+
+- **Tu Nombre** - *Trabajo Inicial* - [TuUsuario](https://github.com/tu-usuario)
+
+## 🙏 Agradecimientos
+
+- FastAPI
+- SQLAlchemy
+- Pydantic
+- Docker
+- Y todos los demás proyectos open source que hacen esto posible

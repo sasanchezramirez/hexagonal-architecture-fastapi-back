@@ -1,7 +1,20 @@
 from typing import Final
 
-from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
 from app.domain.model.user import User
+from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
+
+
+def map_user_to_entity(user: User) -> UserEntity:
+    """
+    Mapea un modelo de dominio a una entidad de usuario.
+
+    Args:
+        user: Modelo de dominio de usuario
+
+    Returns:
+        UserEntity: Entidad de usuario para la base de datos
+    """
+    return UserEntity.from_user(user)
 
 
 def map_entity_to_user(user_entity: UserEntity) -> User:
@@ -21,26 +34,6 @@ def map_entity_to_user(user_entity: UserEntity) -> User:
         creation_date=str(user_entity.creation_date),
         profile_id=user_entity.profile_id,
         status_id=user_entity.status_id
-    )
-
-
-def map_user_to_entity(user: User) -> UserEntity:
-    """
-    Mapea un modelo de dominio a una entidad de usuario.
-
-    Args:
-        user: Modelo de dominio de usuario
-
-    Returns:
-        UserEntity: Entidad de usuario para la base de datos
-    """
-    return UserEntity(
-        id=user.id,
-        email=user.email,
-        password=user.password,
-        creation_date=user.creation_date,
-        profile_id=user.profile_id,
-        status_id=user.status_id
     )
 
 

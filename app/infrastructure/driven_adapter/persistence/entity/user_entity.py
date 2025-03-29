@@ -23,18 +23,42 @@ class UserEntity(Base):
     profile_id: Optional[int] = Column(Integer, nullable=True)
     status_id: Optional[int] = Column(Integer, nullable=True)
 
-    def __init__(self, user: User) -> None:
+    def __init__(self, email: str, password: str, creation_date: str, 
+                 profile_id: Optional[int] = None, status_id: Optional[int] = None) -> None:
         """
-        Inicializa una entidad de usuario a partir de un modelo de dominio.
+        Inicializa una entidad de usuario.
+
+        Args:
+            email: Correo electrónico del usuario
+            password: Contraseña del usuario
+            creation_date: Fecha de creación del usuario
+            profile_id: ID del perfil del usuario (opcional)
+            status_id: ID del estado del usuario (opcional)
+        """
+        self.email = email
+        self.password = password
+        self.creation_date = creation_date
+        self.profile_id = profile_id
+        self.status_id = status_id
+
+    @classmethod
+    def from_user(cls, user: User) -> 'UserEntity':
+        """
+        Crea una entidad de usuario a partir de un modelo de dominio.
 
         Args:
             user: Modelo de dominio de usuario
+
+        Returns:
+            UserEntity: Entidad de usuario
         """
-        self.email = user.email
-        self.password = user.password
-        self.creation_date = user.creation_date
-        self.profile_id = user.profile_id
-        self.status_id = user.status_id
+        return cls(
+            email=user.email,
+            password=user.password or "",  # Si no hay contraseña, usar cadena vacía
+            creation_date=user.creation_date,
+            profile_id=user.profile_id,
+            status_id=user.status_id
+        )
 
     def __repr__(self) -> str:
         """

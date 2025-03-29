@@ -1,5 +1,5 @@
 import logging
-from typing import Final
+from typing import Final, Optional
 from datetime import datetime
 
 from app.domain.model.user import User
@@ -55,24 +55,38 @@ class UserUseCase:
             logger.error(f"Error no manejado al crear usuario: {e}")
             raise CustomException(ResponseCodeEnum.KOG01)
 
-    def get_user(self, user_to_get: User) -> User:
+    def get_user(self, user: User) -> User:
         """
-        Obtiene un usuario por su ID o correo electrónico.
+        Obtiene un usuario por su ID o email.
+        Si se proporciona el email, se busca por email.
+        Si el email está vacío, se busca por ID.
+        Si se proporcionan ambos, se prioriza la búsqueda por email.
 
         Args:
-            user_to_get: Usuario con ID o correo electrónico a buscar
+            user: Usuario con ID o email para buscar
 
         Returns:
             User: Usuario encontrado
 
         Raises:
-            CustomException: Si hay un error al obtener el usuario
+            CustomException: Si el usuario no existe o hay un error
         """
-        logger.info("Iniciando búsqueda de usuario")
+        logger.info("Iniciando obtención de usuario")
         try:
-            if user_to_get.id and user_to_get.id != 0:
-                return self.persistence_gateway.get_user_by_id(user_to_get.id)
-            return self.persistence_gateway.get_user_by_email(user_to_get.email)
+            # Si se proporciona el email, buscar por email
+            if user.email and user.email != "default@example.com":
+                logger.info(f"Buscando usuario por email: {user.email}")
+                return self.persistence_gateway.get_user_by_email(user.email)
+            
+            # Si no hay email o está vacío, buscar por ID
+            if user.id:
+                logger.info(f"Buscando usuario por ID: {user.id}")
+                return self.persistence_gateway.get_user_by_id(user.id)
+            
+            # Si no hay ni email ni ID, lanzar error
+            logger.error("No se proporcionó ni email ni ID para la búsqueda")
+            raise CustomException(ResponseCodeEnum.KOU02)
+            
         except CustomException as e:
             logger.error(f"Error al obtener usuario: {e}")
             raise
@@ -82,7 +96,7 @@ class UserUseCase:
 
     def update_user(self, user: User) -> User:
         """
-        Actualiza los datos de un usuario existente.
+        Actualiza un usuario existente.
 
         Args:
             user: Usuario con los datos a actualizar
@@ -91,7 +105,7 @@ class UserUseCase:
             User: Usuario actualizado
 
         Raises:
-            CustomException: Si hay un error al actualizar el usuario
+            CustomException: Si el usuario no existe o hay un error
         """
         logger.info("Iniciando actualización de usuario")
         try:

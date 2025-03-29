@@ -55,7 +55,7 @@ def create_user(
         validate_new_user(user_dto)
         user = map_user_dto_to_user(user_dto)
         user = user_usecase.create_user(user)
-        response_data = map_user_to_user_output_dto(user)
+        response_data = map_user_to_user_output_dto(user).model_dump()
         return JSONResponse(
             status_code=200,
             content=ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
@@ -100,7 +100,7 @@ def get_user(
         validate_get_user(get_user_dto)
         user = map_get_user_dto_to_user(get_user_dto)
         user = user_usecase.get_user(user)
-        response_data = map_user_to_user_output_dto(user)
+        response_data = map_user_to_user_output_dto(user).model_dump()
         return JSONResponse(
             status_code=200,
             content=ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)
@@ -145,7 +145,7 @@ def login(
         token = auth_usecase.authenticate_user(user)
         
         if token:
-            token_response = Token(access_token=token, token_type="bearer")
+            token_response = Token(access_token=token, token_type="bearer").model_dump()
             return JSONResponse(
                 status_code=200,
                 content=ApiResponse.create_response(ResponseCodeEnum.KO000, token_response)
@@ -194,7 +194,7 @@ def update_user(
         validate_update_user(update_user_dto)
         user = map_update_user_dto_to_user(update_user_dto)
         user = user_usecase.update_user(user)
-        response_data = map_user_to_user_output_dto(user)
+        response_data = map_user_to_user_output_dto(user).model_dump()
         return JSONResponse(
             status_code=200,
             content=ApiResponse.create_response(ResponseCodeEnum.KO000, response_data)

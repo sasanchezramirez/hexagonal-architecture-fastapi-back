@@ -62,11 +62,17 @@ class GetUser(BaseModel):
         description="ID del usuario a buscar",
         example=1
     )
-    email: Optional[EmailStr] = Field(
+    email: Optional[str] = Field(
         default=None,
         description="Correo electrónico del usuario a buscar",
         example="usuario@ejemplo.com"
     )
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Si el email está vacío, lo convertimos a None
+        if self.email == "":
+            self.email = None
 
 
 class Token(BaseModel):

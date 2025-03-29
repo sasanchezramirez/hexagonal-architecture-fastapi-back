@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Final
 
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
 from app.infrastructure.driven_adapter.persistence.repository.user_repository import UserRepository
@@ -51,13 +51,22 @@ class Persistence(PersistenceGateway):
             CustomException: Si hay un error en la validación o en la operación de base de datos.
         """
         try:
-            user_entity = UserEntity(user)
+            # Verificar si el email ya existe
+            existing_user = self.user_repository.get_user_by_email(user.email)
+            if existing_user:
+                raise CustomException(ResponseCodeEnum.KOU01)
+                
+            user_entity = UserEntity.from_user(user)
             created_user_entity = self.user_repository.create_user(user_entity)
             self.session.commit()
-            return mapper.map_user_entity_to_user(created_user_entity)
+            return mapper.map_entity_to_user(created_user_entity)
         except CustomException as e:
             self.session.rollback()
             raise e
+        except IntegrityError as e:
+            logger.error(f"Error de integridad al crear usuario: {e}")
+            self.session.rollback()
+            raise CustomException(ResponseCodeEnum.KOU01)
         except SQLAlchemyError as e:
             logger.error(f"Error al crear usuario: {e}")
             self.session.rollback()
@@ -78,7 +87,7 @@ class Persistence(PersistenceGateway):
         """
         try:
             user_entity = self.user_repository.get_user_by_id(id)
-            return mapper.map_user_entity_to_user(user_entity)
+            return mapper.map_entity_to_user(user_entity)
         except CustomException as e:
             raise e
         except SQLAlchemyError as e:
@@ -101,7 +110,7 @@ class Persistence(PersistenceGateway):
         """
         try:
             user_entity = self.user_repository.get_user_by_email(email)
-            return mapper.map_user_entity_to_user(user_entity)
+            return mapper.map_entity_to_user(user_entity)
         except CustomException as e:
             raise e
         except SQLAlchemyError as e:
@@ -126,10 +135,10 @@ class Persistence(PersistenceGateway):
             existing_user = self.user_repository.get_user_by_id(user.id)
             if not existing_user:
                 raise CustomException(ResponseCodeEnum.KOU02)
-            user_entity = mapper.map_user_update_to_user_entity(user, existing_user)
+            user_entity = mapper.map_update_to_entity(user, existing_user)
             updated_user_entity = self.user_repository.update_user(user_entity)
             self.session.commit()
-            return mapper.map_user_entity_to_user(updated_user_entity)
+            return mapper.map_entity_to_user(updated_user_entity)
         except CustomException as e:
             self.session.rollback()
             raise e

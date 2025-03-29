@@ -67,12 +67,12 @@ class UserRepository:
             logger.error(f"Error no manejado: {e}")
             raise CustomException(ResponseCodeEnum.KOG01)
 
-    def get_user_by_id(self, user_id: int) -> Optional[User]:
+    def get_user_by_id(self, id: int) -> Optional[User]:
         """
         Obtiene un usuario por su ID.
 
         Args:
-            user_id: ID del usuario a buscar
+            id: ID del usuario a buscar
 
         Returns:
             Optional[User]: Usuario encontrado o None si no existe
@@ -80,15 +80,12 @@ class UserRepository:
         Raises:
             CustomException: Si hay un error al obtener el usuario
         """
-        logger.info(f"Buscando usuario con ID: {user_id}")
         try:
-            user_entity = self.session.query(UserEntity).filter_by(id=user_id).first()
-            if user_entity is None:
-                logger.error(f"Usuario con ID {user_id} no encontrado")
+            user_entity = self.session.query(UserEntity).filter(UserEntity.id == id).first()
+            if not user_entity:
+                logger.error(f"Usuario con ID {id} no encontrado")
                 raise CustomException(ResponseCodeEnum.KOU02)
             return map_entity_to_user(user_entity)
-        except CustomException as e:
-            raise
         except SQLAlchemyError as e:
             logger.error(f"Error de base de datos: {e}")
             raise CustomException(ResponseCodeEnum.KOG02)
@@ -98,10 +95,10 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> Optional[User]:
         """
-        Obtiene un usuario por su correo electrónico.
+        Obtiene un usuario por su email.
 
         Args:
-            email: Correo electrónico del usuario a buscar
+            email: Email del usuario a buscar
 
         Returns:
             Optional[User]: Usuario encontrado o None si no existe
@@ -109,15 +106,13 @@ class UserRepository:
         Raises:
             CustomException: Si hay un error al obtener el usuario
         """
-        logger.info(f"Buscando usuario con email: {email}")
         try:
-            user_entity = self.session.query(UserEntity).filter_by(email=email).first()
-            if user_entity is None:
-                logger.error(f"Usuario con email {email} no encontrado")
-                raise CustomException(ResponseCodeEnum.KOU02)
+            logger.info(f"Buscando usuario con email: {email}")
+            user_entity = self.session.query(UserEntity).filter(UserEntity.email == email).first()
+            if not user_entity:
+                logger.info(f"Usuario con email {email} no encontrado")
+                return None
             return map_entity_to_user(user_entity)
-        except CustomException as e:
-            raise
         except SQLAlchemyError as e:
             logger.error(f"Error de base de datos: {e}")
             raise CustomException(ResponseCodeEnum.KOG02)
@@ -127,10 +122,10 @@ class UserRepository:
 
     def update_user(self, user: User) -> User:
         """
-        Actualiza los datos de un usuario existente.
+        Actualiza un usuario existente.
 
         Args:
-            user: Usuario con los datos a actualizar
+            user: Usuario a actualizar
 
         Returns:
             User: Usuario actualizado
@@ -138,33 +133,19 @@ class UserRepository:
         Raises:
             CustomException: Si hay un error al actualizar el usuario
         """
-        logger.info(f"Actualizando usuario: {user.email}")
         try:
-            existing_user = self.session.query(UserEntity).filter_by(id=user.id).first()
-            if not existing_user:
-                raise CustomException(ResponseCodeEnum.KOD02)
-
-            if user.email:
-                existing_user.email = user.email
-            if user.password:
-                existing_user.password = user.password
-            if user.profile_id is not None and user.profile_id != 0:
-                existing_user.profile_id = user.profile_id
-            if user.status_id is not None and user.status_id != 0:
-                existing_user.status_id = user.status_id
-
+            user_entity = self.session.query(UserEntity).filter(UserEntity.id == user.id).first()
+            if not user_entity:
+                logger.error(f"Usuario con ID {user.id} no encontrado")
+                raise CustomException(ResponseCodeEnum.KOU02)
+            
+            updated_entity = map_user_to_entity(user)
+            for key, value in updated_entity.__dict__.items():
+                if key != '_sa_instance_state' and value is not None:
+                    setattr(user_entity, key, value)
+            
             self.session.commit()
-            return map_entity_to_user(existing_user)
-        except IntegrityError as e:
-            logger.error(f"Error de integridad: {e}")
-            if "llave duplicada" in str(e.orig) or "duplicate key" in str(e.orig):
-                raise CustomException(ResponseCodeEnum.KOU01)
-            elif "viola la llave" in str(e.orig) or "key violation" in str(e.orig):
-                if "profile_id" in str(e.orig):
-                    raise CustomException(ResponseCodeEnum.KOU03)
-                elif "status_id" in str(e.orig):
-                    raise CustomException(ResponseCodeEnum.KOU04)
-            raise CustomException(ResponseCodeEnum.KOG02)
+            return map_entity_to_user(user_entity)
         except SQLAlchemyError as e:
             logger.error(f"Error de base de datos: {e}")
             raise CustomException(ResponseCodeEnum.KOG02)

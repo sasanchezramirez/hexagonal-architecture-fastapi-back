@@ -27,19 +27,20 @@ class User(BaseModel):
         min_length=8
     )
     
-    creation_date: Optional[str] = Field(
-        default=None,
+    creation_date: str = Field(
         description="Fecha de creación del usuario en formato ISO"
     )
     
     profile_id: Optional[int] = Field(
         default=None,
-        description="Identificador del perfil del usuario"
+        description="Identificador del perfil del usuario",
+        gt=0
     )
     
     status_id: Optional[int] = Field(
         default=None,
-        description="Identificador del estado del usuario"
+        description="Identificador del estado del usuario",
+        gt=0
     )
 
     class Config:

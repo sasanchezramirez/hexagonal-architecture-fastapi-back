@@ -97,11 +97,17 @@ def map_update_user_dto_to_user(user_dto: UpdateUserInput) -> User:
     Returns:
         User: Modelo de dominio de usuario
     """
-    return User(
-        id=user_dto.id,
-        email=user_dto.email,
-        password=user_dto.password,
-        profile_id=user_dto.profile_id,
-        status_id=user_dto.status_id,
-        creation_date=datetime.now().isoformat()  # Fecha por defecto para actualización
-    )
+    # Crear diccionario con los campos base
+    user_data = {
+        "id": user_dto.id,
+        "email": user_dto.email,
+        "profile_id": user_dto.profile_id,
+        "status_id": user_dto.status_id,
+        "creation_date": datetime.now().isoformat()  # Fecha por defecto para actualización
+    }
+    
+    # Solo agregar password si no es None
+    if user_dto.password is not None:
+        user_data["password"] = user_dto.password
+    
+    return User(**user_data)

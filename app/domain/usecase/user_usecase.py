@@ -109,8 +109,13 @@ class UserUseCase:
         """
         logger.info("Iniciando actualización de usuario")
         try:
-            if user.password:
+            # Solo hashear el password si se proporciona uno nuevo
+            if user.password is not None:
+                logger.info("Actualizando contraseña del usuario")
                 user.password = hash_password(user.password)
+            else:
+                logger.info("No se actualizará la contraseña del usuario")
+            
             return self.persistence_gateway.update_user(user)
         except CustomException as e:
             logger.error(f"Error al actualizar usuario: {e}")

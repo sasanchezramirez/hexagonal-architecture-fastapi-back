@@ -121,8 +121,7 @@ class UpdateUserInput(BaseModel):
     )
     password: Optional[str] = Field(
         default=None,
-        description="Nueva contraseña del usuario",
-        min_length=8,
+        description="Nueva contraseña del usuario. Si está vacío, no se actualizará la contraseña",
         example="nuevaContraseña123"
     )
     profile_id: Optional[int] = Field(
@@ -137,3 +136,12 @@ class UpdateUserInput(BaseModel):
         gt=0,
         example=2
     )
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Si el password está vacío, lo convertimos a None
+        if self.password == "":
+            self.password = None
+        # Validar longitud mínima solo si se proporciona un password
+        elif self.password is not None and len(self.password) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")

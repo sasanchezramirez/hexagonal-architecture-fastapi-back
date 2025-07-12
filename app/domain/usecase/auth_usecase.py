@@ -1,16 +1,14 @@
 import logging
 from typing import Final, Optional
 
-from datetime import datetime
 from app.domain.model.user import User
-from app.domain.model.util.custom_exceptions import CustomException
-from app.domain.model.util.response_codes import ResponseCodeEnum
+from app.domain.model.util.exceptions import UserNotFoundException, InvalidCredentialsException
 from app.domain.gateway.persistence_gateway import PersistenceGateway
 from app.domain.usecase.util.security import verify_password
 from app.domain.usecase.util.jwt import create_access_token
 
 
-logger: Final[logging.Logger] = logging.getLogger("Auth UseCase")
+logger: Final[logging.Logger] = logging.getLogger("AuthUseCase")
 
 
 class AuthUseCase:
@@ -25,56 +23,32 @@ class AuthUseCase:
     def __init__(self, persistence_gateway: PersistenceGateway) -> None:
         """
         Inicializa el caso de uso de autenticación.
-
-        Args:
-            persistence_gateway: Gateway para operaciones de persistencia
         """
         self.persistence_gateway: Final[PersistenceGateway] = persistence_gateway
 
-    async def authenticate_user(self, user: User) -> Optional[str]:
+    async def authenticate_user(self, user: User) -> str:
         """
         Autentica un usuario y genera un token de acceso si las credenciales son válidas.
 
         Args:
-            user: Usuario a autenticar con sus credenciales
+            user: Usuario a autenticar con sus credenciales.
 
         Returns:
-            Optional[str]: Token de acceso si la autenticación es exitosa, None en caso contrario
-        """
-        try:
-            user_validated = await self.get_user(user)
-            if user_validated and verify_password(user.password, user_validated.password):
-                return create_access_token({"sub": user_validated.email})
-            return None
-        except CustomException as e:
-            logger.error(f"Error de autenticación: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Error no manejado en autenticación: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
-
-    async def get_user(self, user_to_get: User) -> User:
-        """
-        Obtiene un usuario por su correo electrónico.
-
-        Args:
-            user_to_get: Usuario con el correo electrónico a buscar
-
-        Returns:
-            User: Usuario encontrado
-
+            str: Token de acceso si la autenticación es exitosa.
+        
         Raises:
-            CustomException: Si hay un error al obtener el usuario
+            InvalidCredentialsException: Si el email no se encuentra o la contraseña es incorrecta.
         """
-        logger.info("Iniciando búsqueda de usuario por correo electrónico")
-        try:
-            return await self.persistence_gateway.get_user_by_email(user_to_get.email)
-        except CustomException as e:
-            logger.error(f"Error al obtener usuario: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Error no manejado al obtener usuario: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
+        logger.info(f"Iniciando autenticación para el usuario: {user.email}")
+        
+        db_user = await self.persistence_gateway.get_user_by_email(user.email)
+        
+        if not db_user or not verify_password(user.password, db_user.password):
+            logger.warning(f"Intento de autenticación fallido para: {user.email}")
+            raise InvalidCredentialsException()
+            
+        logger.info(f"Autenticación exitosa para: {user.email}")
+        return create_access_token({"sub": db_user.email})
 
 
 

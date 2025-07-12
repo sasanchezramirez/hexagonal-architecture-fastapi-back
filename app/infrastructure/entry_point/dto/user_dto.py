@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 
@@ -62,17 +62,19 @@ class GetUser(BaseModel):
         description="ID del usuario a buscar",
         example=1
     )
-    email: Optional[str] = Field(
+    email: Optional[EmailStr] = Field(
         default=None,
         description="Correo electrónico del usuario a buscar",
         example="usuario@ejemplo.com"
     )
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Si el email está vacío, lo convertimos a None
-        if self.email == "":
-            self.email = None
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convierte un string vacío a None antes de la validación."""
+        if v == "":
+            return None
+        return v
 
 
 class Token(BaseModel):
@@ -121,7 +123,7 @@ class UpdateUserInput(BaseModel):
     )
     password: Optional[str] = Field(
         default=None,
-        description="Nueva contraseña del usuario. Si está vacío, no se actualizará la contraseña",
+        description="Nueva contraseña del usuario. Si está vacío, no se actualizará la contraseña.",
         example="nuevaContraseña123"
     )
     profile_id: Optional[int] = Field(
@@ -137,11 +139,15 @@ class UpdateUserInput(BaseModel):
         example=2
     )
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Si el password está vacío, lo convertimos a None
-        if self.password == "":
-            self.password = None
-        # Validar longitud mínima solo si se proporciona un password
-        elif self.password is not None and len(self.password) < 8:
+    @field_validator('password', mode='before')
+    @classmethod
+    def validate_password(cls, v):
+        """
+        Convierte un string vacío a None y valida la longitud
+        solo si se proporciona un valor.
+        """
+        if v == "":
+            return None
+        if v is not None and len(v) < 8:
             raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        return v

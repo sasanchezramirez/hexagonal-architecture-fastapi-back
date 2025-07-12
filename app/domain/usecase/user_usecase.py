@@ -31,26 +31,33 @@ class UserUseCase:
         Crea un nuevo usuario en el sistema.
         """
         logger.info(f"Iniciando creación de usuario para el email: {user.email}")
+        # La lógica de negocio aquí es hashear la contraseña y establecer la fecha.
         user.creation_date = datetime.now().isoformat()
         user.password = hash_password(user.password)
+        
+        # Delegar la creación a la capa de persistencia.
+        # Si el usuario ya existe, el gateway lanzará DuplicateUserException.
         return await self.persistence_gateway.create_user(user)
 
-    async def get_user(self, user: User) -> User:
+    async def get_user_by_id(self, user_id: int) -> User:
         """
-        Obtiene un usuario por su ID o email.
+        Obtiene un usuario por su ID.
         """
-        logger.info(f"Iniciando obtención de usuario por ID: {user.id} o Email: {user.email}")
-        
-        found_user: Optional[User] = None
-        if user.email and user.email != "default@example.com":
-            found_user = await self.persistence_gateway.get_user_by_email(user.email)
-        elif user.id:
-            found_user = await self.persistence_gateway.get_user_by_id(user.id)
+        logger.info(f"Iniciando obtención de usuario por ID: {user_id}")
+        user = await self.persistence_gateway.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFoundException(user_id=user_id)
+        return user
 
-        if not found_user:
-            raise UserNotFoundException(user_id=user.id, email=user.email)
-            
-        return found_user
+    async def get_user_by_email(self, email: str) -> User:
+        """
+        Obtiene un usuario por su email.
+        """
+        logger.info(f"Iniciando obtención de usuario por email: {email}")
+        user = await self.persistence_gateway.get_user_by_email(email)
+        if not user:
+            raise UserNotFoundException(email=email)
+        return user
 
     async def update_user(self, user: User) -> User:
         """
@@ -58,10 +65,13 @@ class UserUseCase:
         """
         logger.info(f"Iniciando actualización de usuario con ID: {user.id}")
         
+        # Lógica de negocio: solo hashear el password si se proporciona uno nuevo.
         if user.password:
             logger.info("Actualizando contraseña del usuario.")
             user.password = hash_password(user.password)
         
+        # Delegar la actualización.
+        # Si el usuario no existe, el gateway lanzará UserNotFoundException.
         return await self.persistence_gateway.update_user(user)
 
 

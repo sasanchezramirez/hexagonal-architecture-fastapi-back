@@ -48,12 +48,19 @@ async def get_user(
     current_user: dict = Depends(get_current_user)
 ) -> UserOutput:
     """
-    Obtiene los detalles de un usuario.
+    Obtiene los detalles de un usuario por ID o por Email.
     """
     logger.info(f"Endpoint: Inicia la obtención de usuario por '{current_user.get('sub')}'.")
     validate_get_user(get_user_dto)
-    user = map_get_user_dto_to_user(get_user_dto)
-    found_user = await user_usecase.get_user(user)
+    
+    found_user = None
+    if get_user_dto.email:
+        logger.info(f"Buscando usuario por email: {get_user_dto.email}")
+        found_user = await user_usecase.get_user_by_email(get_user_dto.email)
+    elif get_user_dto.id:
+        logger.info(f"Buscando usuario por ID: {get_user_dto.id}")
+        found_user = await user_usecase.get_user_by_id(get_user_dto.id)
+
     return map_user_to_user_output_dto(found_user)
 
 @router.post('/login', response_model=Token)

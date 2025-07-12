@@ -1,10 +1,9 @@
 import logging
 from typing import Optional, Final
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
 from app.infrastructure.driven_adapter.persistence.repository.user_repository import UserRepository
 from app.domain.model.user import User
 from app.domain.gateway.persistence_gateway import PersistenceGateway
@@ -16,28 +15,28 @@ logger: Final = logging.getLogger("Persistence")
 
 class Persistence(PersistenceGateway):
     """
-    Implementación del gateway de persistencia que maneja las operaciones de base de datos.
+    Implementación asíncrona del gateway de persistencia que maneja las operaciones de base de datos.
     
     Esta clase implementa la interfaz PersistenceGateway y proporciona métodos para
-    realizar operaciones CRUD en la base de datos utilizando SQLAlchemy.
+    realizar operaciones CRUD en la base de datos utilizando SQLAlchemy en modo asíncrono.
     
     Attributes:
-        session (Session): Sesión de SQLAlchemy para operaciones de base de datos.
+        session (AsyncSession): Sesión de SQLAlchemy asíncrona para operaciones de base de datos.
         user_repository (UserRepository): Repositorio para operaciones específicas de usuarios.
     """
     
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         """
         Inicializa el servicio de persistencia.
         
         Args:
-            session (Session): Sesión de SQLAlchemy para operaciones de base de datos.
+            session (AsyncSession): Sesión de SQLAlchemy asíncrona para operaciones de base de datos.
         """
-        logger.info("Inicializando servicio de persistencia")
-        self.session: Final[Session] = session
+        logger.info("Inicializando servicio de persistencia asíncrono")
+        self.session: Final[AsyncSession] = session
         self.user_repository: Final[UserRepository] = UserRepository(session)
 
-    def create_user(self, user: User) -> User:
+    async def create_user(self, user: User) -> User:
         """
         Crea un nuevo usuario en la base de datos.
         
@@ -51,28 +50,19 @@ class Persistence(PersistenceGateway):
             CustomException: Si hay un error en la validación o en la operación de base de datos.
         """
         try:
-            # Verificar si el email ya existe
-            existing_user = self.user_repository.get_user_by_email(user.email)
-            if existing_user:
-                raise CustomException(ResponseCodeEnum.KOU01)
-                
-            user_entity = UserEntity.from_user(user)
-            created_user_entity = self.user_repository.create_user(user_entity)
-            self.session.commit()
-            return mapper.map_entity_to_user(created_user_entity)
+            # La validación de email duplicado se delega al repositorio,
+            # que capturará la IntegrityError de la base de datos.
+            return await self.user_repository.create_user(user)
         except CustomException as e:
-            self.session.rollback()
+            await self.session.rollback()
             raise e
-        except IntegrityError as e:
-            logger.error(f"Error de integridad al crear usuario: {e}")
-            self.session.rollback()
-            raise CustomException(ResponseCodeEnum.KOU01)
-        except SQLAlchemyError as e:
-            logger.error(f"Error al crear usuario: {e}")
-            self.session.rollback()
+        except (SQLAlchemyError, IntegrityError) as e:
+            logger.error(f"Error de base de datos al crear usuario: {e}")
+            await self.session.rollback()
+            # Mapear a una excepción de dominio genérica de BD
             raise CustomException(ResponseCodeEnum.KOG02)
         
-    def get_user_by_id(self, id: int) -> Optional[User]:
+    async def get_user_by_id(self, id: int) -> Optional[User]:
         """
         Obtiene un usuario por su ID.
         
@@ -86,16 +76,14 @@ class Persistence(PersistenceGateway):
             CustomException: Si hay un error en la operación de base de datos.
         """
         try:
-            user_entity = self.user_repository.get_user_by_id(id)
-            return mapper.map_entity_to_user(user_entity)
+            return await self.user_repository.get_user_by_id(id)
         except CustomException as e:
             raise e
         except SQLAlchemyError as e:
-            logger.error(f"Error al obtener usuario: {e}")
-            self.session.rollback()
+            logger.error(f"Error al obtener usuario por ID: {e}")
             raise CustomException(ResponseCodeEnum.KOG02)
         
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    async def get_user_by_email(self, email: str) -> Optional[User]:
         """
         Obtiene un usuario por su email.
         
@@ -109,16 +97,14 @@ class Persistence(PersistenceGateway):
             CustomException: Si hay un error en la operación de base de datos.
         """
         try:
-            user_entity = self.user_repository.get_user_by_email(email)
-            return mapper.map_entity_to_user(user_entity)
+            return await self.user_repository.get_user_by_email(email)
         except CustomException as e:
             raise e
         except SQLAlchemyError as e:
-            logger.error(f"Error al obtener usuario: {e}")
-            self.session.rollback()
+            logger.error(f"Error al obtener usuario por email: {e}")
             raise CustomException(ResponseCodeEnum.KOG02)
     
-    def update_user(self, user: User) -> User:
+    async def update_user(self, user: User) -> User:
         """
         Actualiza un usuario existente en la base de datos.
         
@@ -132,17 +118,12 @@ class Persistence(PersistenceGateway):
             CustomException: Si el usuario no existe o hay un error en la operación.
         """
         try:
-            existing_user = self.user_repository.get_user_by_id(user.id)
-            if not existing_user:
-                raise CustomException(ResponseCodeEnum.KOU02)
-            user_entity = mapper.map_update_to_entity(user, existing_user)
-            updated_user_entity = self.user_repository.update_user(user_entity)
-            self.session.commit()
-            return mapper.map_entity_to_user(updated_user_entity)
+            # La validación de existencia se delega al repositorio.
+            return await self.user_repository.update_user(user)
         except CustomException as e:
-            self.session.rollback()
+            await self.session.rollback()
             raise e
         except SQLAlchemyError as e:
             logger.error(f"Error al actualizar usuario: {e}")
-            self.session.rollback()
+            await self.session.rollback()
             raise CustomException(ResponseCodeEnum.KOG02)

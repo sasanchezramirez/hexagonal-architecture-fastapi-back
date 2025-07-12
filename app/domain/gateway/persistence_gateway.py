@@ -6,7 +6,7 @@ from app.domain.model.user import User
 
 class PersistenceGateway(ABC):
     """
-    Interfaz abstracta para el gateway de persistencia.
+    Interfaz abstracta para el gateway de persistencia asíncrono.
     
     Esta interfaz define los métodos que deben implementar las clases
     concretas que manejen la persistencia de datos, siguiendo el principio
@@ -14,7 +14,7 @@ class PersistenceGateway(ABC):
     """
 
     @abstractmethod
-    def create_user(self, user: User) -> User:
+    async def create_user(self, user: User) -> User:
         """
         Crea un nuevo usuario en la base de datos.
 
@@ -30,7 +30,7 @@ class PersistenceGateway(ABC):
         pass
 
     @abstractmethod
-    def get_user_by_id(self, user_id: int) -> Optional[User]:
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """
         Obtiene un usuario por su ID.
 
@@ -46,7 +46,7 @@ class PersistenceGateway(ABC):
         pass
 
     @abstractmethod
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    async def get_user_by_email(self, email: str) -> Optional[User]:
         """
         Obtiene un usuario por su correo electrónico.
 
@@ -62,7 +62,7 @@ class PersistenceGateway(ABC):
         pass
 
     @abstractmethod
-    def update_user(self, user: User) -> User:
+    async def update_user(self, user: User) -> User:
         """
         Actualiza los datos de un usuario existente.
 

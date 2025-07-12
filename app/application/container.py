@@ -6,7 +6,7 @@ from app.application.handler import Handlers
 from app.domain.usecase.user_usecase import UserUseCase
 from app.domain.usecase.auth_usecase import AuthUseCase
 from app.infrastructure.driven_adapter.persistence.service.persistence import Persistence
-from app.infrastructure.driven_adapter.persistence.config.database import SessionLocal
+from app.infrastructure.driven_adapter.persistence.config.database import get_session
 
 
 class Container(containers.DeclarativeContainer):
@@ -23,8 +23,8 @@ class Container(containers.DeclarativeContainer):
         modules=Handlers.get_module_namespaces()
     )
 
-    # Sesión de base de datos
-    session: Final = providers.Singleton(SessionLocal)
+    # Sesión de base de datos asíncrona
+    session: Final = providers.Resource(get_session)
 
     # Gateway de persistencia
     persistence_gateway: Final = providers.Factory(

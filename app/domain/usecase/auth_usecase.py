@@ -31,7 +31,7 @@ class AuthUseCase:
         """
         self.persistence_gateway: Final[PersistenceGateway] = persistence_gateway
 
-    def authenticate_user(self, user: User) -> Optional[str]:
+    async def authenticate_user(self, user: User) -> Optional[str]:
         """
         Autentica un usuario y genera un token de acceso si las credenciales son válidas.
 
@@ -42,9 +42,9 @@ class AuthUseCase:
             Optional[str]: Token de acceso si la autenticación es exitosa, None en caso contrario
         """
         try:
-            user_validated = self.get_user(user)
-            if user and verify_password(user.password, user_validated.password):
-                return create_access_token({"sub": user.email})
+            user_validated = await self.get_user(user)
+            if user_validated and verify_password(user.password, user_validated.password):
+                return create_access_token({"sub": user_validated.email})
             return None
         except CustomException as e:
             logger.error(f"Error de autenticación: {e}")
@@ -53,7 +53,7 @@ class AuthUseCase:
             logger.error(f"Error no manejado en autenticación: {e}")
             raise CustomException(ResponseCodeEnum.KOG01)
 
-    def get_user(self, user_to_get: User) -> User:
+    async def get_user(self, user_to_get: User) -> User:
         """
         Obtiene un usuario por su correo electrónico.
 
@@ -68,7 +68,7 @@ class AuthUseCase:
         """
         logger.info("Iniciando búsqueda de usuario por correo electrónico")
         try:
-            return self.persistence_gateway.get_user_by_email(user_to_get.email)
+            return await self.persistence_gateway.get_user_by_email(user_to_get.email)
         except CustomException as e:
             logger.error(f"Error al obtener usuario: {e}")
             raise

@@ -7,15 +7,18 @@ Este proyecto implementa una arquitectura hexagonal (también conocida como puer
 El proyecto sigue los principios de la arquitectura hexagonal, dividiendo la aplicación en tres capas principales:
 
 ### 1. Dominio (Domain)
+
 - **Modelos**: Entidades y objetos de valor que representan el núcleo del negocio
 - **Casos de Uso**: Lógica de negocio principal
 - **Puertos**: Interfaces que definen las interacciones con el exterior
 
 ### 2. Aplicación (Application)
+
 - **Adaptadores Primarios**: Manejan las entradas (HTTP, CLI, etc.)
 - **Adaptadores Secundarios**: Manejan las salidas (base de datos, servicios externos, etc.)
 
 ### 3. Infraestructura (Infrastructure)
+
 - Implementaciones concretas de los puertos
 - Configuración y conexiones externas
 
@@ -37,18 +40,21 @@ El proyecto sigue los principios de la arquitectura hexagonal, dividiendo la apl
 ## 🛠️ Instalación
 
 1. Clonar el repositorio:
+
 ```bash
 git clone https://github.com/tu-usuario/hexagonal-architecture-fastapi-back.git
 cd hexagonal-architecture-fastapi-back
 ```
 
 2. Construir y ejecutar con Docker:
+
 ```bash
 docker-compose build --no-cache
 docker-compose up
 ```
 
 3. Acceder a la documentación de la API:
+
 ```
 http://localhost:8000/docs
 ```
@@ -67,12 +73,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ## 📚 Endpoints
 
 ### Autenticación
+
 - `POST /auth/login`: Iniciar sesión
 - `POST /auth/create-user`: Crear nuevo usuario
 - `GET /auth/get-user`: Obtener usuario por ID o email
 - `PUT /auth/update-user`: Actualizar usuario existente
 
 ### Usuarios
+
 - `GET /users/{user_id}`: Obtener usuario por ID
 - `GET /users/email/{email}`: Obtener usuario por email
 - `PUT /users/{user_id}`: Actualizar usuario

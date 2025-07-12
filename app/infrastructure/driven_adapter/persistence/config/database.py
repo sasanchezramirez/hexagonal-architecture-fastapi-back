@@ -1,9 +1,8 @@
 import logging
-from typing import Final, Generator
+from typing import Final, AsyncGenerator
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import declarative_base
 
 from app.application.settings import settings
 
@@ -19,32 +18,36 @@ def get_database_url() -> str:
         str: URL de conexión a la base de datos
     """
     if settings.ENV == 'local':
+        if settings.DATABASE_URL and 'postgresql' in settings.DATABASE_URL and '+asyncpg' not in settings.DATABASE_URL:
+            return settings.DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
         return settings.DATABASE_URL
     
-    return f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+    return f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 
 
-# Configuración de la base de datos
 DATABASE_URL: Final[str] = get_database_url()
-logger.info(f"Iniciando conexión a base de datos en entorno {settings.ENV}")
+logger.info(f"Iniciando conexión asíncrona a base de datos en entorno {settings.ENV}")
 
-engine: Final = create_engine(DATABASE_URL)
-SessionLocal: Final = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine: Final = create_async_engine(DATABASE_URL)
+AsyncSessionLocal: Final = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
 Base: Final = declarative_base()
 
 
-def get_session() -> Generator[Session, None, None]:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Genera una sesión de base de datos.
+    Genera una sesión de base de datos asíncrona.
 
     Yields:
-        Session: Sesión de SQLAlchemy
+        AsyncSession: Sesión de SQLAlchemy asíncrona
 
     Note:
-        La sesión se cierra automáticamente después de su uso.
+        La sesión se cierra automáticamente después de su uso gracias al contexto `async with`.
     """
-    session = SessionLocal()
-    try:
+    async with AsyncSessionLocal() as session:
         yield session
-    finally:
-        session.close()

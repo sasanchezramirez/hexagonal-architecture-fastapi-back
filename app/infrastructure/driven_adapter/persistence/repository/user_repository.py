@@ -5,22 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from app.infrastructure.driven_adapter.persistence.mapper.user_mapper import map_user_to_entity, map_entity_to_user
 from app.infrastructure.driven_adapter.persistence.entity.user_entity import UserEntity
-from app.domain.model.user import User
-from app.domain.model.util.response_codes import ResponseCodeEnum
-from app.domain.model.util.custom_exceptions import CustomException
 
 
-logger: Final[logging.Logger] = logging.getLogger("User Repository")
+logger: Final[logging.Logger] = logging.getLogger("UserRepository")
 
 
 class UserRepository:
     """
-    Implementación del repositorio de usuarios de forma asíncrona.
+    Capa de Acceso a Datos (DAL) para la entidad de Usuario.
     
-    Esta clase implementa las operaciones de persistencia para usuarios
-    utilizando SQLAlchemy en modo asíncrono.
+    Esta clase implementa las operaciones CRUD básicas y directas con la base de datos
+    para la entidad UserEntity, utilizando SQLAlchemy en modo asíncrono.
+    Su responsabilidad es exclusivamente la interacción con la BD, sin lógica de negocio
+    ni conocimiento del dominio.
     """
 
     def __init__(self, session: AsyncSession) -> None:
@@ -28,145 +26,82 @@ class UserRepository:
         Inicializa el repositorio de usuarios.
 
         Args:
-            session: Sesión de SQLAlchemy asíncrona para operaciones de base de datos
+            session: Sesión de SQLAlchemy asíncrona para operaciones de base de datos.
         """
         self.session: Final[AsyncSession] = session
 
-    async def create_user(self, user: User) -> User:
+    async def create_user(self, user_entity: UserEntity) -> UserEntity:
         """
-        Crea un nuevo usuario en la base de datos.
+        Crea una nueva entidad de usuario en la base de datos.
 
         Args:
-            user: Usuario a crear
+            user_entity: La entidad de usuario a crear.
 
         Returns:
-            User: Usuario creado con ID asignado
-
+            UserEntity: La entidad de usuario creada con su ID asignado.
+        
         Raises:
-            CustomException: Si hay un error al crear el usuario
+            IntegrityError: Si ocurre una violación de constraints (ej. email duplicado).
+            SQLAlchemyError: Para otros errores relacionados con la base de datos.
         """
-        logger.info(f"Creando usuario: {user.email}")
-        try:
-            user_entity = map_user_to_entity(user)
-            self.session.add(user_entity)
-            await self.session.commit()
-            await self.session.refresh(user_entity)
-            return map_entity_to_user(user_entity)
-        except IntegrityError as e:
-            await self.session.rollback()
-            logger.error(f"Error de integridad: {e}")
-            if "llave duplicada" in str(e.orig) or "duplicate key" in str(e.orig):
-                raise CustomException(ResponseCodeEnum.KOU01)
-            elif "viola la llave" in str(e.orig) or "key violation" in str(e.orig):
-                if "profile_id" in str(e.orig):
-                    raise CustomException(ResponseCodeEnum.KOU03)
-                elif "status_id" in str(e.orig):
-                    raise CustomException(ResponseCodeEnum.KOU04)
-            raise CustomException(ResponseCodeEnum.KOG02)
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            logger.error(f"Error de base de datos: {e}")
-            raise CustomException(ResponseCodeEnum.KOG02)
-        except Exception as e:
-            await self.session.rollback()
-            logger.error(f"Error no manejado: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
+        logger.info(f"Creando entidad de usuario para el email: {user_entity.email}")
+        self.session.add(user_entity)
+        await self.session.flush()  # Flush para obtener el ID antes del commit
+        await self.session.refresh(user_entity)
+        return user_entity
 
-    async def get_user_by_id(self, id: int) -> Optional[User]:
+    async def get_user_by_id(self, user_id: int) -> Optional[UserEntity]:
         """
-        Obtiene un usuario por su ID.
+        Obtiene una entidad de usuario por su ID.
 
         Args:
-            id: ID del usuario a buscar
+            user_id: ID de la entidad a buscar.
 
         Returns:
-            Optional[User]: Usuario encontrado o None si no existe
-
+            Optional[UserEntity]: La entidad encontrada o None si no existe.
+        
         Raises:
-            CustomException: Si hay un error al obtener el usuario
+            SQLAlchemyError: Si ocurre un error en la consulta.
         """
-        try:
-            stmt = select(UserEntity).where(UserEntity.id == id)
-            result = await self.session.execute(stmt)
-            user_entity = result.scalars().first()
+        logger.info(f"Buscando entidad de usuario con ID: {user_id}")
+        stmt = select(UserEntity).where(UserEntity.id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
+    async def get_user_by_email(self, email: str) -> Optional[UserEntity]:
+        """
+        Obtiene una entidad de usuario por su email.
+
+        Args:
+            email: Email de la entidad a buscar.
+
+        Returns:
+            Optional[UserEntity]: La entidad encontrada o None si no existe.
+        
+        Raises:
+            SQLAlchemyError: Si ocurre un error en la consulta.
+        """
+        logger.info(f"Buscando entidad de usuario con email: {email}")
+        stmt = select(UserEntity).where(UserEntity.email == email)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
+    async def update_user(self, user_entity: UserEntity) -> UserEntity:
+        """
+        Actualiza una entidad de usuario existente. SQLAlchemy se encarga de
+        detectar los cambios en la entidad adjunta a la sesión.
+
+        Args:
+            user_entity: La entidad de usuario con los datos actualizados.
+
+        Returns:
+            UserEntity: La entidad de usuario actualizada.
             
-            if not user_entity:
-                logger.error(f"Usuario con ID {id} no encontrado")
-                raise CustomException(ResponseCodeEnum.KOU02)
-            return map_entity_to_user(user_entity)
-        except SQLAlchemyError as e:
-            logger.error(f"Error de base de datos: {e}")
-            raise CustomException(ResponseCodeEnum.KOG02)
-        except Exception as e:
-            logger.error(f"Error no manejado: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
-
-    async def get_user_by_email(self, email: str) -> Optional[User]:
-        """
-        Obtiene un usuario por su email.
-
-        Args:
-            email: Email del usuario a buscar
-
-        Returns:
-            Optional[User]: Usuario encontrado o None si no existe
-
         Raises:
-            CustomException: Si hay un error al obtener el usuario
+            SQLAlchemyError: Si ocurre un error durante la actualización.
         """
-        try:
-            logger.info(f"Buscando usuario con email: {email}")
-            stmt = select(UserEntity).where(UserEntity.email == email)
-            result = await self.session.execute(stmt)
-            user_entity = result.scalars().first()
-
-            if not user_entity:
-                logger.info(f"Usuario con email {email} no encontrado")
-                return None
-            return map_entity_to_user(user_entity)
-        except SQLAlchemyError as e:
-            logger.error(f"Error de base de datos: {e}")
-            raise CustomException(ResponseCodeEnum.KOG02)
-        except Exception as e:
-            logger.error(f"Error no manejado: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
-
-    async def update_user(self, user: User) -> User:
-        """
-        Actualiza un usuario existente.
-
-        Args:
-            user: Usuario a actualizar
-
-        Returns:
-            User: Usuario actualizado
-
-        Raises:
-            CustomException: Si hay un error al actualizar el usuario
-        """
-        try:
-            stmt = select(UserEntity).where(UserEntity.id == user.id)
-            result = await self.session.execute(stmt)
-            user_entity = result.scalars().first()
-
-            if not user_entity:
-                logger.error(f"Usuario con ID {user.id} no encontrado")
-                raise CustomException(ResponseCodeEnum.KOU02)
-            
-            # Actualizar campos del entity con valores del modelo de dominio
-            user_data = user.model_dump(exclude_unset=True)
-            for key, value in user_data.items():
-                if hasattr(user_entity, key):
-                    setattr(user_entity, key, value)
-            
-            await self.session.commit()
-            await self.session.refresh(user_entity)
-            return map_entity_to_user(user_entity)
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            logger.error(f"Error de base de datos: {e}")
-            raise CustomException(ResponseCodeEnum.KOG02)
-        except Exception as e:
-            await self.session.rollback()
-            logger.error(f"Error no manejado: {e}")
-            raise CustomException(ResponseCodeEnum.KOG01)
+        logger.info(f"Actualizando entidad de usuario con ID: {user_entity.id}")
+        self.session.add(user_entity)
+        await self.session.flush()
+        await self.session.refresh(user_entity)
+        return user_entity

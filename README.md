@@ -5,196 +5,179 @@
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red.svg)
 ![Arquitectura](https://img.shields.io/badge/Arquitectura-Hexagonal-purple.svg)
 
-API RESTful asíncrona construida con Python y FastAPI, siguiendo los principios de la Arquitectura Hexagonal (Puertos y Adaptadores) para lograr un alto desacoplamiento y mantenibilidad.
+API RESTful asíncrona construida con Python y FastAPI, siguiendo los principios de la Arquitectura Hexagonal (Puertos y Adaptadores) para lograr un alto desacoplamiento, mantenibilidad y testeabilidad.
+
+Este proyecto sirve como un arquetipo de nivel profesional para construir servicios de backend robustos. Su objetivo es demostrar cómo estructurar una aplicación para que la lógica de negocio central permanezca aislada de las decisiones de infraestructura (como el framework web o la base de datos), permitiendo que evolucione de forma independiente.
 
 ---
 
 ## Tabla de Contenidos
 
-1.  [Sobre el Proyecto](#sobre-el-proyecto)
-2.  [Primeros Pasos](#primeros-pasos)
+1.  [Filosofía y Enfoque Arquitectónico](#filosofía-y-enfoque-arquitectónico)
+    *   [Arquitectura Hexagonal (Puertos y Adaptadores)](#arquitectura-hexagonal-puertos-y-adaptadores)
+    *   [Flujo de una Petición](#flujo-de-una-petición)
+    *   [El Poder del Enfoque Asíncrono](#el-poder-del-enfoque-asíncrono)
+2.  [Estructura del Proyecto](#estructura-del-proyecto)
+3.  [Primeros Pasos](#primeros-pasos)
     *   [Prerrequisitos](#prerrequisitos)
     *   [Instalación](#instalación)
-3.  [Ejecutar la Aplicación](#ejecutar-la-aplicación)
-4.  [Estructura del Proyecto](#estructura-del-proyecto)
-5.  [Conceptos Arquitectónicos Clave](#conceptos-arquitectónicos-clave)
-    *   [Manejo de Excepciones](#manejo-de-excepciones)
+4.  [Ejecutar la Aplicación](#ejecutar-la-aplicación)
+5.  [Guías Prácticas de Desarrollo](#guías-prácticas-de-desarrollo)
+    *   [Cómo Añadir un Nuevo Endpoint](#cómo-añadir-un-nuevo-endpoint)
+    *   [Cómo Añadir un Nuevo Caso de Uso](#cómo-añadir-un-nuevo-caso-de-uso)
+    *   [Cómo Cambiar el Motor de Base de Datos](#cómo-cambiar-el-motor-de-base-de-datos)
+    *   [Cómo Añadir un Nuevo Adaptador (Driven Adapter)](#cómo-añadir-un-nuevo-adaptador-driven-adapter)
+    *   [Cómo Añadir una Nueva Excepción de Negocio](#cómo-añadir-una-nueva-excepción-de-negocio)
+6.  [Conceptos Clave Implementados](#conceptos-clave-implementados)
     *   [Inyección de Dependencias](#inyección-de-dependencias)
-    *   [Configuración](#configuración)
-6.  [Guía de Endpoints de la API](#guía-de-endpoints-de-la-api)
-7.  [Testing](#testing)
+    *   [Manejo de Excepciones](#manejo-de-excepciones)
+7.  [Guía de Endpoints de la API](#guía-de-endpoints-de-la-api)
+8.  [Testing](#testing)
 
 ---
 
-## Sobre el Proyecto
+## 1. Filosofía y Enfoque Arquitectónico
 
-Este proyecto sirve como un arquetipo de nivel profesional para construir servicios de backend robustos, testeables y escalables. Se basa en los siguientes pilares:
+### Arquitectura Hexagonal (Puertos y Adaptadores)
 
--   **Framework Asíncrono:** Utiliza **FastAPI** para obtener un alto rendimiento en operaciones de I/O intensivas.
--   **Arquitectura Hexagonal:** Separa estrictamente la **lógica de negocio (dominio)** de los detalles de **infraestructura** (framework web, base de datos). Esto permite que el núcleo de la aplicación sea independiente de la tecnología externa.
--   **Código Limpio y Desacoplado:** Aplica principios como la Inversión de Dependencias (a través de gateways/interfaces) y el Patrón Repositorio para una clara separación de responsabilidades.
+El núcleo de este arquetipo es la separación de responsabilidades. Imaginamos la lógica de negocio como un "hexágono" central que no debe depender de nada externo.
+
+-   **El Interior del Hexágono (`domain`):** Contiene la lógica de negocio pura (modelos, casos de uso) y las interfaces que necesita para comunicarse con el exterior (los "Puertos", como `PersistenceGateway`). No sabe si la app es una API web o una app de consola.
+-   **El Exterior del Hexágono (`infrastructure`):** Contiene los "Adaptadores" que implementan los puertos y conectan el dominio con el mundo real.
+    -   **Adaptadores Primarios (Driving Adapters):** Impulsan la aplicación. En nuestro caso, los handlers de FastAPI (`infrastructure/entry_point`) que reciben peticiones HTTP.
+    -   **Adaptadores Secundarios (Driven Adapters):** Son impulsados por la aplicación. Nuestra capa de persistencia (`infrastructure/driven_adapter`) que implementa el `PersistenceGateway` usando SQLAlchemy.
+
+![Hexagonal Architecture Diagram](https://i.imgur.com/y3b4s1A.png)
+
+### Flujo de una Petición
+
+Un `POST` a `/auth/create-user` sigue este camino:
+1.  **EntryPoint (Adaptador Primario):** El handler en `auth.py` recibe la petición HTTP, la valida usando un DTO y llama al `UserUseCase`.
+2.  **UseCase (Dominio):** El `create_user` en `UserUseCase` ejecuta la lógica de negocio (hashear contraseña, etc.) y llama al método `create_user` del puerto `PersistenceGateway`.
+3.  **Gateway (Puerto del Dominio):** El `PersistenceGateway` es una interfaz abstracta. El caso de uso no sabe quién la implementa.
+4.  **Persistence (Adaptador Secundario):** La clase `Persistence` en `persistence.py`, que implementa el gateway, recibe la llamada. Orquesta al `UserRepository` y a los mappers para convertir el modelo de dominio en una entidad de BD.
+5.  **Repository (Infraestructura):** El `UserRepository` ejecuta la operación final contra la base de datos usando SQLAlchemy.
+
+### El Poder del Enfoque Asíncrono
+
+Toda la aplicación, desde los endpoints hasta las llamadas a la base de datos, utiliza `async/await`. Esto significa que cuando una operación de I/O (como una consulta a la BD) está en espera, el servidor no se bloquea. Cede el control para atender otras peticiones concurrentemente. Esto permite un rendimiento y una escalabilidad muy superiores a los de un enfoque síncrono tradicional con un solo proceso.
 
 ---
 
-## Primeros Pasos
+## 2. Estructura del Proyecto
+
+```
+app/
+├── application/      # Orquestación: Inyección de dependencias, configuración, arranque de la app.
+├── domain/           # El núcleo del negocio. Cero dependencias de infraestructura.
+│   ├── gateway/      # Puertos: Interfaces que el dominio necesita (ej. para persistencia).
+│   ├── model/        # Modelos de negocio (Pydantic) y excepciones de dominio.
+│   └── usecase/      # Lógica de negocio y orquestación de los flujos de trabajo.
+└── infrastructure/   # Todo lo externo: frameworks, bases de datos, etc.
+    ├── driven_adapter/ # Adaptadores "impulsados" por el dominio (ej. BD, APIs externas).
+    │   └── persistence/
+    └── entry_point/    # Adaptadores que "impulsan" el dominio (ej. handlers de API).
+```
+
+---
+
+## 3. Primeros Pasos
 
 ### Prerrequisitos
-
--   Python 3.11 o superior
--   Poetry (recomendado) o `pip` para la gestión de dependencias
+-   Python 3.11+
 -   Una instancia de PostgreSQL en ejecución
--   Docker (opcional, para ejecutar la base de datos)
+-   Docker (opcional, para la BD)
 
 ### Instalación
-
-1.  **Clona el repositorio:**
-    ```bash
-    git clone https://[URL-DEL-REPOSITORIO]
-    cd [NOMBRE-DEL-DIRECTORIO]
-    ```
-
-2.  **Crea un entorno virtual:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
-
-3.  **Instala las dependencias:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Configura las variables de entorno:**
-    Crea un archivo `.env` a partir del ejemplo `.env.example` y rellena los valores, especialmente los de la conexión a la base de datos.
-    ```bash
-    cp .env.example .env
-    # Edita el archivo .env con tus configuraciones
-    ```
+1.  **Clona el repositorio:** `git clone <URL>`
+2.  **Crea un entorno virtual:** `python -m venv .venv && source .venv/bin/activate`
+3.  **Instala dependencias:** `pip install -r requirements.txt`
+4.  **Configura el entorno:** Copia `.env.example` a `.env` y edítalo con tus credenciales de base de datos.
 
 ---
 
-## Ejecutar la Aplicación
-
-Para iniciar el servidor de desarrollo, ejecuta:
+## 4. Ejecutar la Aplicación
 
 ```bash
 uvicorn app.main:app --reload
 ```
-
-La API estará disponible en `http://127.0.0.1:8000`.
-
----
-
-## Estructura del Proyecto
-
-*(Esta sección se completará más adelante)*
+La API estará disponible en `http://127.0.0.1:8000/docs`.
 
 ---
 
-## Conceptos Arquitectónicos Clave
+## 5. Guías Prácticas de Desarrollo
 
-### Manejo de Excepciones
+### Cómo Añadir un Nuevo Endpoint
+1.  **Crea el DTO:** Define los modelos de entrada/salida en un archivo dentro de `app/infrastructure/entry_point/dto/`.
+2.  **Crea el Mapper:** Si es necesario, añade funciones en `app/infrastructure/entry_point/mapper/` para convertir entre el DTO y el modelo de dominio.
+3.  **Añade el Endpoint:** En el archivo de handler correspondiente en `app/infrastructure/entry_point/handler/`, añade la nueva ruta usando el decorador `@router`.
+4.  **Llama al Caso de Uso:** Inyecta y llama al caso de uso apropiado. El handler se encarga de la lógica de enrutamiento (HTTP -> Dominio).
 
-El proyecto utiliza un patrón de **Manejo Centralizado de Excepciones Basado en Tipos** para asegurar un código limpio, desacoplado y predecible.
+### Cómo Añadir un Nuevo Caso de Uso
+1.  **Define el Caso de Uso:** Crea una nueva clase en `app/domain/usecase/`. Debe recibir sus dependencias (como el `PersistenceGateway`) en el constructor.
+2.  **Implementa la Lógica:** Escribe los métodos que contienen la lógica de negocio pura.
+3.  **Regístralo en el Contenedor:** En `app/application/container.py`, añade un nuevo `provider.Factory` para tu caso de uso, inyectándole sus dependencias.
 
-#### Filosofía
+### Cómo Cambiar el Motor de Base de Datos
+Gracias a la arquitectura desacoplada, este proceso es sorprendentemente simple.
+1.  **Instala el Driver Asíncrono:** Instala el driver necesario para tu nueva base de datos (ej. `pip install aiomysql` para MySQL).
+2.  **Actualiza la URL de Conexión:** En tu archivo `.env`, modifica la `DATABASE_URL` para que apunte a la nueva base de datos y use el nuevo driver (ej. `DATABASE_URL="mysql+aiomysql://user:pass@host/db"`).
+3.  **¡Listo!** No es necesario cambiar ningún otro código, ya que la capa de dominio y los casos de uso no tienen conocimiento de la implementación de la base de datos.
 
-1.  **El Dominio Lanza Excepciones Semánticas:** El código de negocio (`domain`, `usecase`) no sabe nada de HTTP. Lanza excepciones con nombres claros que describen el problema de negocio (ej. `UserNotFoundException`).
-2.  **Los Endpoints son Limpios:** La capa de la API (`entry_point`) no contiene bloques `try/except`. Su única función es llamar a los casos de uso y devolver resultados exitosos.
-3.  **Una Capa Centralizada Traduce Errores:** Un conjunto de "manejadores de excepciones", registrados en la instancia de FastAPI, captura estas excepciones de dominio y las traduce a respuestas HTTP estandarizadas (404, 409, 401, etc.).
+### Cómo Añadir un Nuevo Adaptador (Driven Adapter)
+Imagina que necesitas notificar por email cuando un usuario se crea.
+1.  **Define el Puerto en el Dominio:** En `app/domain/gateway/`, crea una nueva interfaz:
+    ```python
+    class NotificationGateway(ABC):
+        @abstractmethod
+        async def send_welcome_email(self, user: User):
+            pass
+    ```
+2.  **Actualiza el Caso de Uso:** Inyecta el nuevo gateway en el `UserUseCase` y llámalo en `create_user`.
+3.  **Crea el Adaptador en Infraestructura:** En `app/infrastructure/driven_adapter/`, crea una nueva carpeta `notification/` y dentro un archivo `email_service.py`:
+    ```python
+    class EmailService(NotificationGateway):
+        async def send_welcome_email(self, user: User):
+            # Lógica para conectar a un servicio como SendGrid y enviar el email
+            print(f"Enviando email de bienvenida a {user.email}")
+    ```
+4.  **Regístralo en el Contenedor:** En `container.py`, añade un nuevo `provider` para `EmailService` y actualiza el `provider` del `UserUseCase` para inyectarle la nueva dependencia.
 
-#### Flujo de una Excepción
+### Cómo Añadir una Nueva Excepción de Negocio
+Sigue el patrón de **Nacimiento -> Burbujeo -> Traducción**.
+1.  **Definir la Excepción:** En `app/domain/model/util/exceptions.py`, crea una nueva clase que herede de `DomainException`.
+2.  **Lanzar la Excepción:** En la capa que tiene el contexto para detectar el error (normalmente un `UseCase` o un `Adapter`), lanza tu nueva excepción.
+3.  **Crear el Manejador:** En `app/infrastructure/entry_point/utils/exception_handler.py`, crea una función `async` que reciba la excepción y devuelva una `JSONResponse` con el código de estado y mensaje apropiados.
+4.  **Registrar el Manejador:** En `app/application/fast_api.py`, usa `app.add_exception_handler()` para registrar tu nuevo manejador. Recuerda hacerlo antes de los manejadores más genéricos.
 
-El flujo sigue un patrón de "Nacimiento -> Burbujeo -> Traducción":
+---
 
-1.  **Nacimiento:** La excepción nace en la capa más profunda que tiene el contexto para entender el error. Por ejemplo, la capa de persistencia convierte un `IntegrityError` de la base de datos en un `DuplicateUserException`.
-2.  **Burbujeo:** La excepción de dominio viaja hacia arriba a través de las capas (persistencia -> caso de uso -> endpoint) sin ser capturada.
-3.  **Traducción:** Justo antes de que la aplicación se rompa, el manejador global correspondiente la intercepta y la convierte en una `JSONResponse` con el código de estado y mensaje correctos.
-
-#### Cómo Añadir una Nueva Excepción (Ejemplo)
-
-Supongamos que queremos evitar que se cree un usuario con un `profile_id` que no existe.
-
-**Paso 1: Definir la Excepción Semántica**
-
-En `app/domain/model/util/exceptions.py`, añade una nueva clase de excepción:
-
-```python
-class ProfileNotFoundException(DomainException):
-    """Lanzada cuando se intenta usar un profile_id que no existe."""
-    def __init__(self, profile_id: int):
-        message = f"El perfil con ID '{profile_id}' no existe."
-        super().__init__(message)
-```
-
-**Paso 2: Lanzar la Excepción donde Nace**
-
-El lugar correcto es el adaptador de persistencia, que puede interpretar el error de clave foránea de la base de datos.
-
-En `app/infrastructure/driven_adapter/persistence/service/persistence.py`, modifica el método `create_user`:
-
-```python
-# Dentro del método create_user
-except IntegrityError as e:
-    await self.session.rollback()
-    # Asumiendo que el nombre de la constraint de FK es 'fk_users_profile_id'
-    if "fk_users_profile_id" in str(e.orig):
-        raise ProfileNotFoundException(profile_id=user.profile_id)
-    else:
-        raise DuplicateUserException(email=user.email)
-```
-
-**Paso 3: Crear el Manejador de la Excepción**
-
-En `app/infrastructure/entry_point/utils/exception_handler.py`, añade una nueva función manejadora que traducirá la excepción a una respuesta HTTP. Un error de este tipo suele corresponder a un `400 Bad Request`.
-
-```python
-from app.domain.model.util.exceptions import ProfileNotFoundException
-
-async def profile_not_found_exception_handler(request: Request, exc: ProfileNotFoundException):
-    """Manejador para ProfileNotFoundException (HTTP 400)."""
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": exc.message},
-    )
-```
-
-**Paso 4: Registrar el Nuevo Manejador**
-
-Finalmente, informa a FastAPI sobre este nuevo manejador en `app/application/fast_api.py`. **El orden es importante**: regístralo antes de los manejadores más genéricos.
-
-```python
-# ... (importaciones)
-from app.domain.model.util.exceptions import ProfileNotFoundException
-from app.infrastructure.entry_point.utils.exception_handler import profile_not_found_exception_handler
-
-def create_app() -> FastAPI:
-    # ...
-    # Registrar manejadores (de más específico a más genérico)
-    app.add_exception_handler(ProfileNotFoundException, profile_not_found_exception_handler)
-    app.add_exception_handler(UserNotFoundException, user_not_found_exception_handler)
-    # ... resto de manejadores
-    return app
-```
-
-Con estos cuatro pasos, has integrado un nuevo flujo de error de forma limpia y mantenible en toda la aplicación.
+## 6. Conceptos Clave Implementados
 
 ### Inyección de Dependencias
+Utilizamos la librería `dependency-injector`. El archivo `app/application/container.py` actúa como el "plano" de la aplicación, definiendo cómo se construyen y conectan las clases (`Persistence`, `UserUseCase`, etc.) sin que ellas se conozcan directamente. Esto es fundamental para el desacoplamiento y la testeabilidad.
 
-*(Esta sección se completará más adelante)*
-
-### Configuración
-
-*(Esta sección se completará más adelante)*
+### Manejo de Excepciones
+El proyecto utiliza un sistema de manejo de excepciones global y centralizado. Las excepciones semánticas de negocio (ej. `UserNotFoundException`) se lanzan desde las capas internas y son capturadas por manejadores específicos en la capa de la API, que las traducen a respuestas HTTP estandarizadas. Esto mantiene los endpoints limpios y el dominio agnóstico a HTTP.
 
 ---
 
-## Guía de Endpoints de la API
+## 7. Guía de Endpoints de la API
 
-*(Esta sección se completará más adelante)*
+| Verbo  | Ruta              | Descripción                      | Autenticación |
+| :----- | :---------------- | :------------------------------- | :------------ |
+| `POST` | `/auth/create-user` | Crea un nuevo usuario.           | No            |
+| `POST` | `/auth/login`       | Autentica y devuelve un token JWT. | No            |
+| `POST` | `/auth/get-user`    | Obtiene un usuario por ID o email. | Requerida     |
+| `POST` | `/auth/update-user` | Actualiza un usuario existente.  | Requerida     |
 
 ---
 
-## Testing
+## 8. Testing
 
 *(Esta sección se completará más adelante)*
+
+La estrategia de testing debe seguir la misma separación de la arquitectura:
+-   **Tests Unitarios:** Para los `UseCases` y `Mappers`. Se mockean las dependencias (como los gateways). Deben residir en `tests/unit/`.
+-   **Tests de Integración:** Para los `Adapters` (ej. `Persistence`). Se prueba la integración con servicios reales pero controlados (ej. una base de datos de prueba). Deben residir en `tests/integration/`.
+-   **Tests End-to-End:** Para los `EntryPoints`. Se usa un cliente HTTP para probar el flujo completo de la API. Deben residir en `tests/e2e/`.

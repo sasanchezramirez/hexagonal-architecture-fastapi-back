@@ -1,4 +1,5 @@
 __pycache__
 .env
-/venv
+.venv
 PLAN_DE_COMPLETITUD.md
+poetry.lock

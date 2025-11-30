@@ -1,0 +1,18 @@
+[project]
+name = "hexagonal-architecture-fastapi-back"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Santiago",email = "sasanchezramirez@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi (>=0.123.0,<0.124.0)",
+    "uvicorn[standard] (>=0.38.0,<0.39.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

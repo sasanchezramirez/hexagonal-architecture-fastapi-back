@@ -17,8 +17,8 @@ def get_database_url() -> str:
     Returns:
         str: URL de conexión a la base de datos
     """
-    if settings.ENV == 'local':
-        if settings.DATABASE_URL and 'postgresql' in settings.DATABASE_URL and '+asyncpg' not in settings.DATABASE_URL:
+    if settings.DATABASE_URL:
+        if 'postgresql' in settings.DATABASE_URL and '+asyncpg' not in settings.DATABASE_URL:
             return settings.DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
         return settings.DATABASE_URL
     

@@ -3,3 +3,4 @@ __pycache__
 .venv
 PLAN_DE_COMPLETITUD.md
 poetry.lock
+.gemini

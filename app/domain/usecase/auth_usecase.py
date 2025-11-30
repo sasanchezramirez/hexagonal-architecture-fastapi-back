@@ -1,9 +1,9 @@
 import logging
-from typing import Final, Optional
+from typing import Final
 
 from app.domain.model.user import User
-from app.domain.model.util.exceptions import UserNotFoundException, InvalidCredentialsException
-from app.domain.gateway.persistence_gateway import PersistenceGateway
+from app.domain.model.util.exceptions import InvalidCredentialsException
+from app.domain.gateway.user_data_gateway import IUserDataGateway
 from app.domain.usecase.util.security import verify_password
 from app.domain.usecase.util.jwt import create_access_token
 
@@ -20,11 +20,11 @@ class AuthUseCase:
     de tokens de acceso.
     """
 
-    def __init__(self, persistence_gateway: PersistenceGateway) -> None:
+    def __init__(self, user_data_gateway: IUserDataGateway) -> None:
         """
         Inicializa el caso de uso de autenticación.
         """
-        self.persistence_gateway: Final[PersistenceGateway] = persistence_gateway
+        self.user_data_gateway: Final[IUserDataGateway] = user_data_gateway
 
     async def authenticate_user(self, user: User) -> str:
         """
@@ -41,7 +41,7 @@ class AuthUseCase:
         """
         logger.info(f"Iniciando autenticación para el usuario: {user.email}")
         
-        db_user = await self.persistence_gateway.get_user_by_email(user.email)
+        db_user = await self.user_data_gateway.get_user_by_email(user.email)
         
         if not db_user or not verify_password(user.password, db_user.password):
             logger.warning(f"Intento de autenticación fallido para: {user.email}")

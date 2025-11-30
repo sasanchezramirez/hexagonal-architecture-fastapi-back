@@ -3,11 +3,13 @@ from typing import Final
 from dependency_injector import containers, providers
 
 from app.application.handler import Handlers
+
 from app.domain.usecase.user_usecase import UserUseCase
 from app.domain.usecase.auth_usecase import AuthUseCase
-from app.infrastructure.driven_adapter.persistence.service.persistence import Persistence
-from app.infrastructure.driven_adapter.persistence.config.database import get_session
 
+from app.infrastructure.driven_adapter.persistence.config.database import get_session
+from app.infrastructure.driven_adapter.persistence.user_repository.sqlalchemy_user_repository import UserRepository
+from app.infrastructure.driven_adapter.user_adapter.user_data_gateway_impl import UserDataGatewayImpl
 
 class Container(containers.DeclarativeContainer):
     """
@@ -27,19 +29,24 @@ class Container(containers.DeclarativeContainer):
     session: Final = providers.Resource(get_session)
 
     # Gateway de persistencia
-    persistence_gateway: Final = providers.Factory(
-        Persistence,
+    user_repository: Final = providers.Factory(
+        UserRepository,
         session=session
+    )
+
+    user_data_gateway: Final = providers.Factory(
+        UserDataGatewayImpl,
+        user_repository=user_repository
     )
 
     # Casos de uso
     user_usecase: Final = providers.Factory(
         UserUseCase,
-        persistence_gateway=persistence_gateway
+        user_data_gateway=user_data_gateway
     )
     
     auth_usecase: Final = providers.Factory(
         AuthUseCase,
-        persistence_gateway=persistence_gateway
+        user_data_gateway=user_data_gateway
     )
 

@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String
 from typing import Optional
 
 from app.infrastructure.driven_adapter.persistence.config.database import Base
@@ -8,10 +7,10 @@ from app.domain.model.user import User
 
 class UserEntity(Base):
     """
-    Entidad de base de datos para usuarios.
+    Database entity for users.
     
-    Esta clase representa la tabla de usuarios en la base de datos
-    utilizando SQLAlchemy como ORM.
+    This class represents the users table in the database
+    using SQLAlchemy as ORM.
     """
 
     __tablename__ = "users"
@@ -26,14 +25,14 @@ class UserEntity(Base):
     def __init__(self, email: str, password: str, creation_date: str, 
                  profile_id: Optional[int] = None, status_id: Optional[int] = None) -> None:
         """
-        Inicializa una entidad de usuario.
+        Initializes a user entity.
 
         Args:
-            email: Correo electrónico del usuario
-            password: Contraseña del usuario
-            creation_date: Fecha de creación del usuario
-            profile_id: ID del perfil del usuario (opcional)
-            status_id: ID del estado del usuario (opcional)
+            email: User's email
+            password: User's password
+            creation_date: User's creation date
+            profile_id: User's profile ID (optional)
+            status_id: User's status ID (optional)
         """
         self.email = email
         self.password = password
@@ -44,17 +43,17 @@ class UserEntity(Base):
     @classmethod
     def from_user(cls, user: User) -> 'UserEntity':
         """
-        Crea una entidad de usuario a partir de un modelo de dominio.
+        Creates a user entity from a domain model.
 
         Args:
-            user: Modelo de dominio de usuario
+            user: User domain model
 
         Returns:
-            UserEntity: Entidad de usuario
+            UserEntity: User entity
         """
         return cls(
             email=user.email,
-            password=user.password or "",  # Si no hay contraseña, usar cadena vacía
+            password=user.password or "",  # If no password, use empty string
             creation_date=user.creation_date,
             profile_id=user.profile_id,
             status_id=user.status_id
@@ -62,10 +61,10 @@ class UserEntity(Base):
 
     def __repr__(self) -> str:
         """
-        Representación en string de la entidad.
+        String representation of the entity.
 
         Returns:
-            str: Representación de la entidad
+            str: Entity representation
         """
         return f"<UserEntity(id={self.id}, email={self.email})>"
 

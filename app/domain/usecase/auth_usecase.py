@@ -13,41 +13,40 @@ logger: Final[logging.Logger] = logging.getLogger("AuthUseCase")
 
 class AuthUseCase:
     """
-    Caso de uso para la autenticación de usuarios.
+    Use case for user authentication.
     
-    Esta clase maneja la lógica de negocio relacionada con la autenticación
-    de usuarios, incluyendo la verificación de credenciales y la generación
-    de tokens de acceso.
+    This class handles business logic related to user authentication,
+    including credential verification and access token generation.
     """
 
     def __init__(self, user_data_gateway: IUserDataGateway) -> None:
         """
-        Inicializa el caso de uso de autenticación.
+        Initializes the authentication use case.
         """
         self.user_data_gateway: Final[IUserDataGateway] = user_data_gateway
 
     async def authenticate_user(self, user: User) -> str:
         """
-        Autentica un usuario y genera un token de acceso si las credenciales son válidas.
+        Authenticates a user and generates an access token if credentials are valid.
 
         Args:
-            user: Usuario a autenticar con sus credenciales.
+            user: User to authenticate with credentials.
 
         Returns:
-            str: Token de acceso si la autenticación es exitosa.
+            str: Access token if authentication is successful.
         
         Raises:
-            InvalidCredentialsException: Si el email no se encuentra o la contraseña es incorrecta.
+            InvalidCredentialsException: If email is not found or password is incorrect.
         """
-        logger.info(f"Iniciando autenticación para el usuario: {user.email}")
+        logger.info(f"Starting authentication for user: {user.email}")
         
         db_user = await self.user_data_gateway.get_user_by_email(user.email)
         
         if not db_user or not verify_password(user.password, db_user.password):
-            logger.warning(f"Intento de autenticación fallido para: {user.email}")
+            logger.warning(f"Authentication failed for: {user.email}")
             raise InvalidCredentialsException()
             
-        logger.info(f"Autenticación exitosa para: {user.email}")
+        logger.info(f"Authentication successful for: {user.email}")
         return create_access_token({"sub": db_user.email})
 
 

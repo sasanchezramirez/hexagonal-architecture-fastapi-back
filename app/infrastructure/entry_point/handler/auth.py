@@ -7,7 +7,6 @@ from dependency_injector.wiring import inject, Provide
 from app.infrastructure.entry_point.validator.validator import validate_new_user, validate_get_user, validate_login, validate_update_user
 from app.infrastructure.entry_point.mapper.user_mapper import (
     map_user_dto_to_user,
-    map_get_user_dto_to_user,
     map_login_dto_to_user,
     map_update_user_dto_to_user,
     map_user_to_user_output_dto
@@ -32,9 +31,9 @@ async def create_user(
     user_usecase: UserUseCase = Depends(Provide[Container.user_usecase])
 ) -> UserOutput:
     """
-    Crea un nuevo usuario en el sistema.
+    Creates a new user in the system.
     """
-    logger.info("Endpoint: Inicia la creación de usuario.")
+    logger.info("Endpoint: Starting user creation.")
     validate_new_user(user_dto)
     user = map_user_dto_to_user(user_dto)
     created_user = await user_usecase.create_user(user)
@@ -48,17 +47,17 @@ async def get_user(
     current_user: dict = Depends(get_current_user)
 ) -> UserOutput:
     """
-    Obtiene los detalles de un usuario por ID o por Email.
+    Retrieves user details by ID or Email.
     """
-    logger.info(f"Endpoint: Inicia la obtención de usuario por '{current_user.get('sub')}'.")
+    logger.info(f"Endpoint: Starting user retrieval by '{current_user.get('sub')}'.")
     validate_get_user(get_user_dto)
     
     found_user = None
     if get_user_dto.email:
-        logger.info(f"Buscando usuario por email: {get_user_dto.email}")
+        logger.info(f"Searching user by email: {get_user_dto.email}")
         found_user = await user_usecase.get_user_by_email(get_user_dto.email)
     elif get_user_dto.id:
-        logger.info(f"Buscando usuario por ID: {get_user_dto.id}")
+        logger.info(f"Searching user by ID: {get_user_dto.id}")
         found_user = await user_usecase.get_user_by_id(get_user_dto.id)
 
     return map_user_to_user_output_dto(found_user)
@@ -70,9 +69,9 @@ async def login(
     auth_usecase: AuthUseCase = Depends(Provide[Container.auth_usecase])
 ) -> Token:
     """
-    Autentica un usuario y genera un token de acceso.
+    Authenticates a user and generates an access token.
     """
-    logger.info(f"Endpoint: Inicia el proceso de login para '{login_dto.email}'.")
+    logger.info(f"Endpoint: Starting login process for '{login_dto.email}'.")
     validate_login(login_dto)
     user = map_login_dto_to_user(login_dto)
     token_str = await auth_usecase.authenticate_user(user)
@@ -86,9 +85,9 @@ async def update_user(
     current_user: dict = Depends(get_current_user)
 ) -> UserOutput:
     """
-    Actualiza los detalles de un usuario.
+    Updates user details.
     """
-    logger.info(f"Endpoint: Inicia la actualización de usuario por '{current_user.get('sub')}'.")
+    logger.info(f"Endpoint: Starting user update by '{current_user.get('sub')}'.")
     validate_update_user(update_user_dto)
     user = map_update_user_dto_to_user(update_user_dto)
     updated_user = await user_usecase.update_user(user)

@@ -140,3 +140,24 @@ The project uses a global and centralized exception handling system. Semantic bu
 | `POST` | `/auth/login`       | Authenticates and returns JWT.   | No            |
 | `POST` | `/auth/get-user`    | Gets a user by ID or email.      | Yes           |
 | `POST` | `/auth/update-user` | Updates an existing user.        | Yes           |
+
+---
+
+## 8. Database Schema
+
+Here are the SQL queries to create the database entities:
+
+### Users Table
+
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR NOT NULL,
+    password VARCHAR NOT NULL,
+    creation_date VARCHAR NOT NULL,
+    profile_id INTEGER,
+    status_id INTEGER
+);
+
+CREATE UNIQUE INDEX ix_users_email ON users (email);
+```

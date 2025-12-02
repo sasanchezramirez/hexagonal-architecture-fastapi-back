@@ -5,81 +5,81 @@ from pydantic import Field
 from dotenv import load_dotenv
 
 
-# Cargar variables de entorno
+# Load environment variables
 load_dotenv()
 
 
 class Settings(BaseSettings):
     """
-    Configuración de la aplicación.
+    Application configuration.
     
-    Esta clase maneja la carga y validación de todas las variables
-    de entorno necesarias para la aplicación.
+    This class handles loading and validation of all environment
+    variables required for the application.
     """
     
-    # Entorno de ejecución
+    # Execution environment
     ENV: str = Field(
         default="local",
         env="ENV",
-        description="Entorno de ejecución (local, development, production)"
+        description="Execution environment (local, development, production)"
     )
     
-    # Configuración de base de datos
+    # Database configuration
     DATABASE_URL: Optional[str] = Field(
         default=None,
         env="DATABASE_URL",
-        description="URL de conexión a la base de datos para entorno local"
+        description="Database connection URL for local environment"
     )
     DB_USER: str = Field(
         default="postgres",
         env="DB_USER",
-        description="Usuario de la base de datos"
+        description="Database user"
     )
     DB_PASSWORD: str = Field(
         default="postgres",
         env="DB_PASSWORD",
-        description="Contraseña de la base de datos"
+        description="Database password"
     )
     DB_HOST: str = Field(
         default="localhost",
         env="DB_HOST",
-        description="Host de la base de datos"
+        description="Database host"
     )
     DB_PORT: str = Field(
         default="5432",
         env="DB_PORT",
-        description="Puerto de la base de datos"
+        description="Database port"
     )
     DB_NAME: str = Field(
         default="hexagonal_db",
         env="DB_NAME",
-        description="Nombre de la base de datos"
+        description="Database name"
     )
     
-    # Configuración de JWT
+    # JWT configuration
     SECRET_KEY: str = Field(
         default="your-secret-key",
         env="SECRET_KEY",
-        description="Clave secreta para firmar tokens JWT"
+        description="Secret key for signing JWT tokens"
     )
     ALGORITHM: str = Field(
         default="HS256",
         env="ALGORITHM",
-        description="Algoritmo de encriptación para tokens JWT"
+        description="Encryption algorithm for JWT tokens"
     )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=30,
         env="ACCESS_TOKEN_EXPIRE_MINUTES",
-        description="Tiempo de expiración de tokens JWT en minutos"
+        description="JWT token expiration time in minutes"
     )
 
     class Config:
         """
-        Configuración de Pydantic.
+        Pydantic configuration.
         """
         env_file = ".env"
         case_sensitive = True
 
 
-# Instancia global de configuración
+# Global configuration instance
 settings: Final[Settings] = Settings()

@@ -1,7 +1,5 @@
-from typing import Final
 import re
 
-from pydantic import ValidationError, EmailStr
 from app.infrastructure.entry_point.dto.user_dto import (
     NewUserInput,
     GetUser,
@@ -12,13 +10,13 @@ from app.infrastructure.entry_point.dto.user_dto import (
 
 def is_valid_email(email: str) -> bool:
     """
-    Valida el formato de un correo electrónico de manera más flexible.
+    Validates email format more flexibly.
     
     Args:
-        email: Correo electrónico a validar
+        email: Email to validate
         
     Returns:
-        bool: True si el formato es válido
+        bool: True if format is valid
     """
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return bool(re.match(pattern, email))
@@ -26,108 +24,108 @@ def is_valid_email(email: str) -> bool:
 
 def validate_new_user(user: NewUserInput) -> bool:
     """
-    Valida los datos de un nuevo usuario.
+    Validates new user data.
 
     Args:
-        user: DTO con los datos del nuevo usuario
+        user: DTO with new user data
 
     Returns:
-        bool: True si la validación es exitosa
+        bool: True if validation is successful
 
     Raises:
-        ValueError: Si los datos no son válidos
+        ValueError: If data is invalid
     """
     if not user.email:
-        raise ValueError("El correo electrónico es obligatorio")
+        raise ValueError("Email is required")
     
     if not is_valid_email(user.email):
-        raise ValueError("El formato del correo electrónico no es válido")
+        raise ValueError("Invalid email format")
     
     if not user.password or len(user.password) < 8:
-        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        raise ValueError("Password must be at least 8 characters long")
     
     if not user.profile_id or user.profile_id <= 0:
-        raise ValueError("El ID del perfil debe ser mayor que 0")
+        raise ValueError("Profile ID must be greater than 0")
     
     if not user.status_id or user.status_id <= 0:
-        raise ValueError("El ID del estado debe ser mayor que 0")
+        raise ValueError("Status ID must be greater than 0")
     
     return True
 
 
 def validate_get_user(user: GetUser) -> bool:
     """
-    Valida los criterios de búsqueda de usuario.
+    Validates user search criteria.
 
     Args:
-        user: DTO con los criterios de búsqueda
+        user: DTO with search criteria
 
     Returns:
-        bool: True si la validación es exitosa
+        bool: True if validation is successful
 
     Raises:
-        ValueError: Si los datos no son válidos
+        ValueError: If data is invalid
     """
     if not user.id and not user.email:
-        raise ValueError("Debe proporcionar un ID o correo electrónico")
+        raise ValueError("Must provide either ID or email")
     
     if user.email and not is_valid_email(user.email):
-        raise ValueError("El formato del correo electrónico no es válido")
+        raise ValueError("Invalid email format")
     
     return True
 
 
 def validate_login(user: LoginInput) -> bool:
     """
-    Valida las credenciales de inicio de sesión.
+    Validates login credentials.
 
     Args:
-        user: DTO con las credenciales de login
+        user: DTO with login credentials
 
     Returns:
-        bool: True si la validación es exitosa
+        bool: True if validation is successful
 
     Raises:
-        ValueError: Si los datos no son válidos
+        ValueError: If data is invalid
     """
     if not user.email:
-        raise ValueError("El correo electrónico es obligatorio")
+        raise ValueError("Email is required")
     
     if not is_valid_email(user.email):
-        raise ValueError("El formato del correo electrónico no es válido")
+        raise ValueError("Invalid email format")
     
     if not user.password or len(user.password) < 8:
-        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        raise ValueError("Password must be at least 8 characters long")
     
     return True
 
 
 def validate_update_user(user: UpdateUserInput) -> bool:
     """
-    Valida los datos de actualización de usuario.
+    Validates user update data.
 
     Args:
-        user: DTO con los datos a actualizar
+        user: DTO with data to update
 
     Returns:
-        bool: True si la validación es exitosa
+        bool: True if validation is successful
 
     Raises:
-        ValueError: Si los datos no son válidos
+        ValueError: If data is invalid
     """
     if not user.id or user.id <= 0:
-        raise ValueError("El ID del usuario es obligatorio y debe ser mayor que 0")
+        raise ValueError("User ID is required and must be greater than 0")
     
     if user.email and not is_valid_email(user.email):
-        raise ValueError("El formato del correo electrónico no es válido")
+        raise ValueError("Invalid email format")
     
     if user.password and len(user.password) < 8:
-        raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        raise ValueError("Password must be at least 8 characters long")
     
     if user.profile_id is not None and user.profile_id <= 0:
-        raise ValueError("El ID del perfil debe ser mayor que 0")
+        raise ValueError("Profile ID must be greater than 0")
     
     if user.status_id is not None and user.status_id <= 0:
-        raise ValueError("El ID del estado debe ser mayor que 0")
+        raise ValueError("Status ID must be greater than 0")
     
     return True

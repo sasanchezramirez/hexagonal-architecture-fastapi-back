@@ -11,12 +11,26 @@ from app.infrastructure.driven_adapter.persistence.user_repository.user_mapper i
 logger: Final = logging.getLogger(__name__)
 
 class UserDataGatewayImpl(IUserDataGateway):
+    """
+    Implementation of the User Data Gateway.
+    
+    This class acts as an adapter between the domain layer and the persistence layer,
+    handling data conversion and exception mapping.
+    """
 
     def __init__(self, userRepository: UserRepository):
+        """
+        Initializes the user data gateway implementation.
+        
+        Args:
+            userRepository: The user repository for database operations.
+        """
         self.user_repository = userRepository
         
     async def create_user(self, user: User) -> User:
-
+        """
+        Creates a new user in the database.
+        """
         user_entity = UserMapper.to_entity(user)
 
         try:
@@ -25,12 +39,14 @@ class UserDataGatewayImpl(IUserDataGateway):
         except IntegrityError: 
             raise DuplicateUserException(f"The user with email {user.email} is already in use by another user.")
         except SQLAlchemyError as e:
-            raise PersistenceException(f"Database error during update: {e}")
+            raise PersistenceException(f"Database error during creation: {e}")
 
 
     async def get_user_by_id(self, user_id: int) -> User:
-
-        entity = await self.repository.get_user_by_id(user_id)
+        """
+        Retrieves a user by their ID.
+        """
+        entity = await self.user_repository.get_user_by_id(user_id)
 
         if not entity:
             return None
@@ -38,7 +54,10 @@ class UserDataGatewayImpl(IUserDataGateway):
         return UserMapper.to_domain(entity)
 
     async def get_user_by_email(self, email: str) -> User:
-        entity = await self.repository.get_user_by_email(email)
+        """
+        Retrieves a user by their email.
+        """
+        entity = await self.user_repository.get_by_email(email)
         
         if not entity:
             return None
@@ -46,17 +65,20 @@ class UserDataGatewayImpl(IUserDataGateway):
         return UserMapper.to_domain(entity)
     
     async def update_user(self, user: User) -> User:
+        """
+        Updates an existing user.
+        """
         if user.id is None:
             raise ValueError("User ID cannot be None for update")
 
-        existing_entity = await self.repository.get_user_by_id(user.id)
+        existing_entity = await self.user_repository.get_user_by_id(user.id)
         if not existing_entity:
             raise UserNotFoundException(f"User with id {user.id} not found")
 
         entity_to_update = UserMapper.to_entity(user)
         
         try:
-            updated_entity = await self.repository.update(entity_to_update)
+            updated_entity = await self.user_repository.update(entity_to_update)
             
             return UserMapper.to_domain(updated_entity)
 

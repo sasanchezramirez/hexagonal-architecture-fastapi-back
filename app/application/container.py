@@ -13,22 +13,22 @@ from app.infrastructure.driven_adapter.user_adapter.user_data_gateway_impl impor
 
 class Container(containers.DeclarativeContainer):
     """
-    Contenedor de inyección de dependencias.
+    Dependency injection container.
     
-    Esta clase configura y proporciona todas las dependencias
-    necesarias para la aplicación, siguiendo el principio de
-    inversión de dependencias.
+    This class configures and provides all dependencies
+    required for the application, following the dependency
+    inversion principle.
     """
 
-    # Configuración de inyección de dependencias
+    # Dependency injection configuration
     wiring_config: Final = containers.WiringConfiguration(
         modules=Handlers.get_module_namespaces()
     )
 
-    # Sesión de base de datos asíncrona
+    # Async database session
     session: Final = providers.Resource(get_session)
 
-    # Gateway de persistencia
+    # Persistence gateway
     user_repository: Final = providers.Factory(
         UserRepository,
         session=session
@@ -39,7 +39,7 @@ class Container(containers.DeclarativeContainer):
         user_repository=user_repository
     )
 
-    # Casos de uso
+    # Use cases
     user_usecase: Final = providers.Factory(
         UserUseCase,
         user_data_gateway=user_data_gateway

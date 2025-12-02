@@ -44,6 +44,9 @@ def validate_new_user(user: NewUserInput) -> bool:
     if not user.password or len(user.password) < 8:
         raise ValueError("Password must be at least 8 characters long")
     
+    if len(user.password) > 72:
+        raise ValueError("Password cannot be longer than 72 characters")
+
     if not user.profile_id or user.profile_id <= 0:
         raise ValueError("Profile ID must be greater than 0")
     
@@ -97,6 +100,9 @@ def validate_login(user: LoginInput) -> bool:
     if not user.password or len(user.password) < 8:
         raise ValueError("Password must be at least 8 characters long")
     
+    if len(user.password) > 72:
+        raise ValueError("Password cannot be longer than 72 characters")
+
     return True
 
 
@@ -121,6 +127,9 @@ def validate_update_user(user: UpdateUserInput) -> bool:
     
     if user.password and len(user.password) < 8:
         raise ValueError("Password must be at least 8 characters long")
+    
+    if user.password and len(user.password) > 72:
+        raise ValueError("Password cannot be longer than 72 characters")
     
     if user.profile_id is not None and user.profile_id <= 0:
         raise ValueError("Profile ID must be greater than 0")

@@ -18,14 +18,14 @@ class UserDataGatewayImpl(IUserDataGateway):
     handling data conversion and exception mapping.
     """
 
-    def __init__(self, userRepository: UserRepository):
+    def __init__(self, user_repository: UserRepository):
         """
         Initializes the user data gateway implementation.
         
         Args:
             userRepository: The user repository for database operations.
         """
-        self.user_repository = userRepository
+        self.user_repository = user_repository
         
     async def create_user(self, user: User) -> User:
         """

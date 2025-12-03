@@ -37,7 +37,7 @@ class UserDataGatewayImpl(IUserDataGateway):
             saved_entity = await self.user_repository.create_user(user_entity)
             return UserMapper.to_domain(saved_entity)
         except IntegrityError: 
-            raise DuplicateUserException(f"The user with email {user.email} is already in use by another user.")
+            raise DuplicateUserException(user.email)
         except SQLAlchemyError as e:
             raise PersistenceException(f"Database error during creation: {e}")
 
@@ -83,7 +83,7 @@ class UserDataGatewayImpl(IUserDataGateway):
             return UserMapper.to_domain(updated_entity)
 
         except IntegrityError:
-            raise DuplicateUserException(f"The email {user.email} is already in use by another user.")
+            raise DuplicateUserException(user.email)
             
         except SQLAlchemyError as e:
             raise PersistenceException(f"Database error during update: {e}")

@@ -7,7 +7,7 @@ from app.application.handler import Handlers
 from app.domain.usecase.user_usecase import UserUseCase
 from app.domain.usecase.auth_usecase import AuthUseCase
 
-from app.infrastructure.driven_adapter.persistence.config.database import get_session
+from app.infrastructure.driven_adapter.persistence.config.database import AsyncSessionLocal
 from app.infrastructure.driven_adapter.persistence.user_repository.sqlalchemy_user_repository import UserRepository
 from app.infrastructure.driven_adapter.user_adapter.user_data_gateway_impl import UserDataGatewayImpl
 from app.infrastructure.entry_point.handler.auth_handler import AuthHandler
@@ -26,13 +26,13 @@ class Container(containers.DeclarativeContainer):
         modules=Handlers.get_module_namespaces()
     )
 
-    # Async database session
-    session: Final = providers.Resource(get_session)
+    # Async database session factory
+    session_factory: Final = providers.Object(AsyncSessionLocal)
 
     # Persistence gateway
     user_repository: Final = providers.Factory(
         UserRepository,
-        session=session
+        session_factory=session_factory
     )
 
     user_data_gateway: Final = providers.Factory(

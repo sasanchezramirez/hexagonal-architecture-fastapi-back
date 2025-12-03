@@ -152,7 +152,7 @@ Here are the SQL queries to create the database entities:
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    email VARCHAR NOT NULL,
+    email VARCHAR NOT NULL UNIQUE,
     password VARCHAR NOT NULL,
     creation_date VARCHAR NOT NULL,
     profile_id INTEGER,

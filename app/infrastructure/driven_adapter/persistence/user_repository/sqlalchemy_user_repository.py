@@ -1,5 +1,5 @@
 import logging
-from typing import Final, Optional, List
+from typing import Final, Optional, List, Callable, AsyncContextManager
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -21,30 +21,32 @@ class UserRepository:
     or domain knowledge.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session_factory: Callable[[], AsyncContextManager[AsyncSession]]) -> None:
         """
         Initializes the user repository.
 
         Args:
-            session: Asynchronous SQLAlchemy session for database operations.
+            session_factory: A callable that returns an async context manager yielding an AsyncSession.
         """
-        self.session: Final[AsyncSession] = session
+        self.session_factory = session_factory
 
     async def create_user(self, user_entity: UserEntity) -> UserEntity:
         """
         Creates a new user entity in the database.
         """
-        try:
-            self.session.add(user_entity)
-            await self.session.flush()  # Flush to get the ID and check constraints
-            await self.session.refresh(user_entity)
-            return user_entity
-        except IntegrityError as e:
-            logger.error(f"Integrity error while creating user: {e}")
-            raise e
-        except SQLAlchemyError as e:
-            logger.error(f"Unknown database error: {e}")
-            raise e
+        async with self.session_factory() as session:
+            try:
+                session.add(user_entity)
+                await session.flush()  # Flush to get the ID and check constraints
+                await session.commit() # Commit the transaction
+                await session.refresh(user_entity)
+                return user_entity
+            except IntegrityError as e:
+                logger.error(f"Integrity error while creating user: {e}")
+                raise e
+            except SQLAlchemyError as e:
+                logger.error(f"Unknown database error: {e}")
+                raise e
 
     async def get_user_by_id(self, user_id: int) -> Optional[UserEntity]:
         """
@@ -55,17 +57,19 @@ class UserRepository:
             If the user is not found, it returns None, which should be handled by the domain
             layer. Connection errors are allowed to propagate.
         """
-        stmt = select(UserEntity).where(UserEntity.id == user_id)
-        result = await self.session.execute(stmt)
-        return result.scalars().first()
+        async with self.session_factory() as session:
+            stmt = select(UserEntity).where(UserEntity.id == user_id)
+            result = await session.execute(stmt)
+            return result.scalars().first()
 
     async def get_by_email(self, email: str) -> Optional[UserEntity]:
         """
         Retrieves a user entity by its email address.
         """
-        stmt = select(UserEntity).where(UserEntity.email == email)
-        result = await self.session.execute(stmt)
-        return result.scalars().first()
+        async with self.session_factory() as session:
+            stmt = select(UserEntity).where(UserEntity.email == email)
+            result = await session.execute(stmt)
+            return result.scalars().first()
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> List[UserEntity]:
         """
@@ -78,18 +82,21 @@ class UserRepository:
         Returns:
             List[UserEntity]: A list of user entities.
         """
-        stmt = select(UserEntity).offset(skip).limit(limit)
-        result = await self.session.execute(stmt)
-        return result.scalars().all()
+        async with self.session_factory() as session:
+            stmt = select(UserEntity).offset(skip).limit(limit)
+            result = await session.execute(stmt)
+            return result.scalars().all()
 
     async def update(self, user_entity: UserEntity) -> UserEntity:
         """
         Updates an existing user entity.
         """
-        try:
-            updated_instance = await self.session.merge(user_entity)
-            await self.session.flush()
-            await self.session.refresh(updated_instance)
-            return updated_instance
-        except IntegrityError as e:
-            raise e
+        async with self.session_factory() as session:
+            try:
+                updated_instance = await session.merge(user_entity)
+                await session.flush()
+                await session.commit() # Commit the transaction
+                await session.refresh(updated_instance)
+                return updated_instance
+            except IntegrityError as e:
+                raise e

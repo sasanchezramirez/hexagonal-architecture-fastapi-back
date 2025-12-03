@@ -10,6 +10,7 @@ from app.domain.usecase.auth_usecase import AuthUseCase
 from app.infrastructure.driven_adapter.persistence.config.database import get_session
 from app.infrastructure.driven_adapter.persistence.user_repository.sqlalchemy_user_repository import UserRepository
 from app.infrastructure.driven_adapter.user_adapter.user_data_gateway_impl import UserDataGatewayImpl
+from app.infrastructure.entry_point.handler.auth_handler import AuthHandler
 
 class Container(containers.DeclarativeContainer):
     """
@@ -48,5 +49,12 @@ class Container(containers.DeclarativeContainer):
     auth_usecase: Final = providers.Factory(
         AuthUseCase,
         user_data_gateway=user_data_gateway
+    )
+
+    # Handlers
+    auth_handler: Final = providers.Factory(
+        AuthHandler,
+        user_usecase=user_usecase,
+        auth_usecase=auth_usecase
     )
 

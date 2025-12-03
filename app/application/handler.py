@@ -11,7 +11,7 @@ class Handlers:
     in the entry point directory.
     """
     
-    HANDLERS_BASE_PATH: Final[tuple] = ('app', 'infrastructure', 'entry_point', 'handler')
+    HANDLERS_BASE_PATH: Final[tuple] = ('app', 'infrastructure', 'entry_point', 'controller')
     IGNORED_FILES: Final[Set[str]] = {'__init__.py', '__pycache__'}
 
     @classmethod

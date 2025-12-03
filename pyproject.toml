@@ -2,9 +2,7 @@
 name = "hexagonal-architecture-fastapi-back"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Santiago",email = "sasanchezramirez@gmail.com"}
-]
+authors = [{ name = "Santiago", email = "sasanchezramirez@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -18,7 +16,8 @@ dependencies = [
     "passlib (>=1.7.4,<2.0.0)",
     "bcrypt (==3.2.2)",
     "python-multipart (>=0.0.20,<0.0.21)",
-    "email-validator (>=2.3.0,<3.0.0)"
+    "email-validator (>=2.3.0,<3.0.0)",
+    "greenlet (>=3.1.1,<4.0.0)",
 ]
 
 

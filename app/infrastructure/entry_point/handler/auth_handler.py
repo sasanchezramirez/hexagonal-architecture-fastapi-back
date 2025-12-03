@@ -1,7 +1,6 @@
 import logging
 from typing import Final
 
-from app.infrastructure.entry_point.validator.validator import validate_new_user, validate_get_user, validate_login, validate_update_user
 from app.infrastructure.entry_point.mapper.user_mapper import (
     map_user_dto_to_user,
     map_login_dto_to_user,
@@ -26,14 +25,12 @@ class AuthHandler:
 
     async def create_user(self, user_dto: NewUserInput) -> UserOutput:
         logger.info("Starting user creation.")
-        validate_new_user(user_dto)
         user = map_user_dto_to_user(user_dto)
         created_user = await self.user_usecase.create_user(user)
         return map_user_to_user_output_dto(created_user)
 
     async def get_user(self, get_user_dto: GetUser, current_user_sub: str) -> UserOutput:
         logger.info(f"Starting user retrieval by '{current_user_sub}'.")
-        validate_get_user(get_user_dto)
         
         found_user = None
         if get_user_dto.email:
@@ -47,14 +44,12 @@ class AuthHandler:
 
     async def login(self, login_dto: LoginInput) -> Token:
         logger.info(f"Starting login process for '{login_dto.email}'.")
-        validate_login(login_dto)
         user = map_login_dto_to_user(login_dto)
         token_str = await self.auth_usecase.authenticate_user(user)
         return Token(access_token=token_str, token_type="bearer")
 
     async def update_user(self, update_user_dto: UpdateUserInput, current_user_sub: str) -> UserOutput:
         logger.info(f"Starting user update by '{current_user_sub}'.")
-        validate_update_user(update_user_dto)
         user = map_update_user_dto_to_user(update_user_dto)
         updated_user = await self.user_usecase.update_user(user)
         return map_user_to_user_output_dto(updated_user)

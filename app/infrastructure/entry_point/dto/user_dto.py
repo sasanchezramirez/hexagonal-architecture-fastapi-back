@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from typing import Optional
 
 
@@ -13,6 +13,7 @@ class NewUserInput(BaseModel):
     password: str = Field(
         description="User's password",
         min_length=8,
+        max_length=72,
         example="password123"
     )
     profile_id: int = Field(
@@ -76,6 +77,13 @@ class GetUser(BaseModel):
             return None
         return v
 
+    @model_validator(mode='after')
+    def check_id_or_email(self) -> 'GetUser':
+        """Ensures that either ID or Email is provided."""
+        if not self.id and not self.email:
+            raise ValueError('Must provide either ID or email')
+        return self
+
 
 class Token(BaseModel):
     """
@@ -103,6 +111,7 @@ class LoginInput(BaseModel):
     password: str = Field(
         description="User's password",
         min_length=8,
+        max_length=72,
         example="password123"
     )
 
@@ -124,6 +133,8 @@ class UpdateUserInput(BaseModel):
     password: Optional[str] = Field(
         default=None,
         description="New password of the user. If empty, password will not be updated.",
+        min_length=8,
+        max_length=72,
         example="newPassword123"
     )
     profile_id: Optional[int] = Field(
@@ -143,11 +154,9 @@ class UpdateUserInput(BaseModel):
     @classmethod
     def validate_password(cls, v):
         """
-        Converts an empty string to None and validates length
-        only if a value is provided.
+        Converts an empty string to None.
+        Length validation is handled by Field constraints.
         """
         if v == "":
             return None
-        if v is not None and len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
         return v

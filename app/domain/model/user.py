@@ -1,56 +1,55 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime
 
 
 class User(BaseModel):
     """
-    Modelo de dominio para representar un usuario en el sistema.
+    Domain model representing a user in the system.
     
-    Este modelo define la estructura de datos y las validaciones
-    necesarias para un usuario en el sistema.
+    This model defines the data structure and validations
+    required for a user in the system.
     """
     
     id: Optional[int] = Field(
         default=None,
-        description="Identificador único del usuario"
+        description="Unique identifier of the user"
     )
     
     email: EmailStr = Field(
-        description="Correo electrónico del usuario",
-        example="usuario@ejemplo.com"
+        description="User's email address",
+        example="user@example.com"
     )
     
     password: Optional[str] = Field(
         default=None,
-        description="Contraseña hasheada del usuario",
+        description="User's hashed password",
         min_length=8
     )
     
     creation_date: str = Field(
-        description="Fecha de creación del usuario en formato ISO"
+        description="User creation date in ISO format"
     )
     
     profile_id: Optional[int] = Field(
         default=None,
-        description="Identificador del perfil del usuario",
+        description="User's profile identifier",
         gt=0
     )
     
     status_id: Optional[int] = Field(
         default=None,
-        description="Identificador del estado del usuario",
+        description="User's status identifier",
         gt=0
     )
 
     class Config:
         """
-        Configuración del modelo Pydantic.
+        Pydantic model configuration.
         """
         json_schema_extra = {
             "example": {
                 "id": 1,
-                "email": "usuario@ejemplo.com",
+                "email": "user@example.com",
                 "creation_date": "2024-03-27T12:00:00",
                 "profile_id": 1,
                 "status_id": 1

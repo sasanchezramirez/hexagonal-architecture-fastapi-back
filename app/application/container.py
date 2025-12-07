@@ -3,43 +3,58 @@ from typing import Final
 from dependency_injector import containers, providers
 
 from app.application.handler import Handlers
+
 from app.domain.usecase.user_usecase import UserUseCase
 from app.domain.usecase.auth_usecase import AuthUseCase
-from app.infrastructure.driven_adapter.persistence.service.persistence import Persistence
-from app.infrastructure.driven_adapter.persistence.config.database import get_session
 
+from app.infrastructure.driven_adapter.persistence.config.database import AsyncSessionLocal
+from app.infrastructure.driven_adapter.persistence.user_repository.sqlalchemy_user_repository import UserRepository
+from app.infrastructure.driven_adapter.user_adapter.user_data_gateway_impl import UserDataGatewayImpl
+from app.infrastructure.entry_point.handler.auth_handler import AuthHandler
 
 class Container(containers.DeclarativeContainer):
     """
-    Contenedor de inyección de dependencias.
+    Dependency injection container.
     
-    Esta clase configura y proporciona todas las dependencias
-    necesarias para la aplicación, siguiendo el principio de
-    inversión de dependencias.
+    This class configures and provides all dependencies
+    required for the application, following the dependency
+    inversion principle.
     """
 
-    # Configuración de inyección de dependencias
+    # Dependency injection configuration
     wiring_config: Final = containers.WiringConfiguration(
         modules=Handlers.get_module_namespaces()
     )
 
-    # Sesión de base de datos asíncrona
-    session: Final = providers.Resource(get_session)
+    # Async database session factory
+    session_factory: Final = providers.Object(AsyncSessionLocal)
 
-    # Gateway de persistencia
-    persistence_gateway: Final = providers.Factory(
-        Persistence,
-        session=session
+    # Persistence gateway
+    user_repository: Final = providers.Factory(
+        UserRepository,
+        session_factory=session_factory
     )
 
-    # Casos de uso
+    user_data_gateway: Final = providers.Factory(
+        UserDataGatewayImpl,
+        user_repository=user_repository
+    )
+
+    # Use cases
     user_usecase: Final = providers.Factory(
         UserUseCase,
-        persistence_gateway=persistence_gateway
+        user_data_gateway=user_data_gateway
     )
     
     auth_usecase: Final = providers.Factory(
         AuthUseCase,
-        persistence_gateway=persistence_gateway
+        user_data_gateway=user_data_gateway
+    )
+
+    # Handlers
+    auth_handler: Final = providers.Factory(
+        AuthHandler,
+        user_usecase=user_usecase,
+        auth_usecase=auth_usecase
     )
 

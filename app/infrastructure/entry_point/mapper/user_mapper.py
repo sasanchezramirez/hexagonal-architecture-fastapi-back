@@ -1,4 +1,4 @@
-from typing import Final
+
 
 from datetime import datetime
 from app.domain.model.user import User
@@ -13,13 +13,13 @@ from app.infrastructure.entry_point.dto.user_dto import (
 
 def map_user_dto_to_user(user_dto: NewUserInput) -> User:
     """
-    Mapea un DTO de nuevo usuario a un modelo de dominio.
+    Maps a new user DTO to a domain model.
 
     Args:
-        user_dto: DTO con los datos del nuevo usuario
+        user_dto: DTO with new user data
 
     Returns:
-        User: Modelo de dominio de usuario
+        User: User domain model
     """
     return User(
         email=user_dto.email,
@@ -32,13 +32,13 @@ def map_user_dto_to_user(user_dto: NewUserInput) -> User:
 
 def map_user_to_user_output_dto(user: User) -> UserOutput:
     """
-    Mapea un modelo de dominio a un DTO de salida.
+    Maps a domain model to an output DTO.
 
     Args:
-        user: Modelo de dominio de usuario
+        user: User domain model
 
     Returns:
-        UserOutput: DTO con los datos del usuario
+        UserOutput: DTO with user data
     """
     return UserOutput(
         id=user.id,
@@ -51,62 +51,62 @@ def map_user_to_user_output_dto(user: User) -> UserOutput:
 
 def map_get_user_dto_to_user(user_dto: GetUser) -> User:
     """
-    Mapea un DTO de búsqueda a un modelo de dominio.
+    Maps a search DTO to a domain model.
 
     Args:
-        user_dto: DTO con los criterios de búsqueda
+        user_dto: DTO with search criteria
 
     Returns:
-        User: Modelo de dominio de usuario
+        User: User domain model
     """
-    # Si no hay email, usar un email por defecto para la validación
-    # El email real se manejará en el caso de uso
+    # If no email, use a default email for validation
+    # The real email will be handled in the use case
     email = user_dto.email if user_dto.email else "default@example.com"
     
     return User(
         id=user_dto.id,
         email=email,
-        creation_date=datetime.now().isoformat()  # Fecha por defecto para búsqueda
+        creation_date=datetime.now().isoformat()  # Default date for search
     )
 
 
 def map_login_dto_to_user(user_dto: LoginInput) -> User:
     """
-    Mapea un DTO de login a un modelo de dominio.
+    Maps a login DTO to a domain model.
 
     Args:
-        user_dto: DTO con las credenciales de login
+        user_dto: DTO with login credentials
 
     Returns:
-        User: Modelo de dominio de usuario
+        User: User domain model
     """
     return User(
         email=user_dto.email,
         password=user_dto.password,
-        creation_date=datetime.now().isoformat()  # Fecha por defecto para login
+        creation_date=datetime.now().isoformat()  # Default date for login
     )
 
 
 def map_update_user_dto_to_user(user_dto: UpdateUserInput) -> User:
     """
-    Mapea un DTO de actualización a un modelo de dominio.
+    Maps an update DTO to a domain model.
 
     Args:
-        user_dto: DTO con los datos a actualizar
+        user_dto: DTO with data to update
 
     Returns:
-        User: Modelo de dominio de usuario
+        User: User domain model
     """
-    # Crear diccionario con los campos base
+    # Create dictionary with base fields
     user_data = {
         "id": user_dto.id,
         "email": user_dto.email,
         "profile_id": user_dto.profile_id,
         "status_id": user_dto.status_id,
-        "creation_date": datetime.now().isoformat()  # Fecha por defecto para actualización
+        "creation_date": datetime.now().isoformat()  # Default date for update
     }
     
-    # Solo agregar password si no es None
+    # Only add password if not None
     if user_dto.password is not None:
         user_data["password"] = user_dto.password
     

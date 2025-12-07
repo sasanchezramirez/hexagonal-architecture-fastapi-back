@@ -1,45 +1,45 @@
 class DomainException(Exception):
-    """Clase base para excepciones específicas del dominio."""
+    """Base class for domain-specific exceptions."""
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
 
 class UserNotFoundException(DomainException):
-    """Lanzada cuando un usuario no se encuentra en la capa de persistencia."""
+    """Raised when a user is not found in the persistence layer."""
     def __init__(self, user_id: int = None, email: str = None):
         if user_id:
-            message = f"Usuario con ID '{user_id}' no encontrado."
+            message = f"User with ID '{user_id}' not found."
         elif email:
-            message = f"Usuario con email '{email}' no encontrado."
+            message = f"User with email '{email}' not found."
         else:
-            message = "Usuario no encontrado."
+            message = "User not found."
         super().__init__(message)
 
 class DuplicateUserException(DomainException):
-    """Lanzada al intentar crear un usuario que ya existe."""
+    """Raised when attempting to create a user that already exists."""
     def __init__(self, email: str):
-        message = f"Un usuario con el email '{email}' ya existe."
+        message = f"A user with email '{email}' already exists."
         super().__init__(message)
 
 class InvalidCredentialsException(DomainException):
-    """Lanzada cuando las credenciales de autenticación son inválidas."""
+    """Raised when authentication credentials are invalid."""
     def __init__(self):
-        message = "Credenciales inválidas proporcionadas."
+        message = "Invalid credentials provided."
         super().__init__(message)
 
 class InvalidTokenException(DomainException):
-    """Lanzada cuando un token JWT es inválido."""
-    def __init__(self, message: str = "Token de autenticación inválido."):
+    """Raised when a JWT token is invalid."""
+    def __init__(self, message: str = "Invalid authentication token."):
         super().__init__(message)
 
 class ExpiredTokenException(InvalidTokenException):
-    """Lanzada cuando un token JWT ha expirado."""
+    """Raised when a JWT token has expired."""
     def __init__(self):
-        super().__init__("El token de autenticación ha expirado.")
+        super().__init__("The authentication token has expired.")
 
 class PersistenceException(DomainException):
-    """Lanzada para errores de persistencia genéricos y no especificados."""
+    """Raised for generic and unspecified persistence errors."""
     def __init__(self, original_exception: Exception = None):
-        message = "Ocurrió un error inesperado en la capa de persistencia."
+        message = "An unexpected error occurred in the persistence layer."
         self.original_exception = original_exception
         super().__init__(message)

@@ -1,27 +1,28 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from typing import Optional
 
 
 class NewUserInput(BaseModel):
     """
-    DTO para la creación de un nuevo usuario.
+    DTO for creating a new user.
     """
     email: EmailStr = Field(
-        description="Correo electrónico del usuario",
-        example="usuario@ejemplo.com"
+        description="User's email address",
+        example="user@example.com"
     )
     password: str = Field(
-        description="Contraseña del usuario",
+        description="User's password",
         min_length=8,
-        example="contraseña123"
+        max_length=72,
+        example="password123"
     )
     profile_id: int = Field(
-        description="ID del perfil del usuario",
+        description="User's profile ID",
         gt=0,
         example=1
     )
     status_id: int = Field(
-        description="ID del estado del usuario",
+        description="User's status ID",
         gt=0,
         example=1
     )
@@ -29,64 +30,71 @@ class NewUserInput(BaseModel):
 
 class UserOutput(BaseModel):
     """
-    DTO para la respuesta de datos de usuario.
+    DTO for user data response.
     """
     id: int = Field(
-        description="Identificador único del usuario",
+        description="Unique identifier of the user",
         example=1
     )
     email: EmailStr = Field(
-        description="Correo electrónico del usuario",
-        example="usuario@ejemplo.com"
+        description="User's email address",
+        example="user@example.com"
     )
     creation_date: str = Field(
-        description="Fecha de creación del usuario",
+        description="User creation date",
         example="2024-03-27T12:00:00"
     )
     profile_id: int = Field(
-        description="ID del perfil del usuario",
+        description="User's profile ID",
         example=1
     )
     status_id: int = Field(
-        description="ID del estado del usuario",
+        description="User's status ID",
         example=1
     )
 
 
 class GetUser(BaseModel):
     """
-    DTO para la búsqueda de un usuario.
+    DTO for searching a user.
     """
     id: Optional[int] = Field(
         default=None,
-        description="ID del usuario a buscar",
+        description="ID of the user to search",
         example=1
     )
     email: Optional[EmailStr] = Field(
         default=None,
-        description="Correo electrónico del usuario a buscar",
-        example="usuario@ejemplo.com"
+        description="Email of the user to search",
+        example="user@example.com"
     )
 
     @field_validator('email', mode='before')
     @classmethod
     def empty_str_to_none(cls, v):
-        """Convierte un string vacío a None antes de la validación."""
+        """Converts an empty string to None before validation."""
         if v == "":
             return None
         return v
 
+    @model_validator(mode='after')
+    def check_id_or_email(self) -> 'GetUser':
+        """Ensures that either ID or Email is provided."""
+        if not self.id and not self.email:
+            raise ValueError('Must provide either ID or email')
+        return self
+
 
 class Token(BaseModel):
     """
-    DTO para la respuesta de autenticación.
+    DTO for authentication response.
     """
     access_token: str = Field(
-        description="Token de acceso JWT",
+        description="JWT access token",
         example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
     )
     token_type: str = Field(
-        description="Tipo de token",
+        description="Token type",
         default="bearer",
         example="bearer"
     )
@@ -94,47 +102,50 @@ class Token(BaseModel):
 
 class LoginInput(BaseModel):
     """
-    DTO para el inicio de sesión.
+    DTO for login.
     """
     email: EmailStr = Field(
-        description="Correo electrónico del usuario",
-        example="usuario@ejemplo.com"
+        description="User's email address",
+        example="user@example.com"
     )
     password: str = Field(
-        description="Contraseña del usuario",
+        description="User's password",
         min_length=8,
-        example="contraseña123"
+        max_length=72,
+        example="password123"
     )
 
 
 class UpdateUserInput(BaseModel):
     """
-    DTO para la actualización de un usuario.
+    DTO for updating a user.
     """
     id: int = Field(
-        description="ID del usuario a actualizar",
+        description="ID of the user to update",
         gt=0,
         example=1
     )
     email: Optional[EmailStr] = Field(
         default=None,
-        description="Nuevo correo electrónico del usuario",
-        example="nuevo@ejemplo.com"
+        description="New email address of the user",
+        example="new@example.com"
     )
     password: Optional[str] = Field(
         default=None,
-        description="Nueva contraseña del usuario. Si está vacío, no se actualizará la contraseña.",
-        example="nuevaContraseña123"
+        description="New password of the user. If empty, password will not be updated.",
+        min_length=8,
+        max_length=72,
+        example="newPassword123"
     )
     profile_id: Optional[int] = Field(
         default=None,
-        description="Nuevo ID del perfil del usuario",
+        description="New profile ID of the user",
         gt=0,
         example=2
     )
     status_id: Optional[int] = Field(
         default=None,
-        description="Nuevo ID del estado del usuario",
+        description="New status ID of the user",
         gt=0,
         example=2
     )
@@ -143,11 +154,9 @@ class UpdateUserInput(BaseModel):
     @classmethod
     def validate_password(cls, v):
         """
-        Convierte un string vacío a None y valida la longitud
-        solo si se proporciona un valor.
+        Converts an empty string to None.
+        Length validation is handled by Field constraints.
         """
         if v == "":
             return None
-        if v is not None and len(v) < 8:
-            raise ValueError("La contraseña debe tener al menos 8 caracteres")
         return v

@@ -5,22 +5,22 @@ from typing import Iterator, Final, List, Set
 
 class Handlers:
     """
-    Clase responsable de cargar y gestionar los handlers de la aplicación.
+    Class responsible for loading and managing application handlers.
     
-    Esta clase implementa un cargador dinámico de handlers que se encuentran
-    en el directorio de entry points.
+    This class implements a dynamic handler loader that finds handlers
+    in the entry point directory.
     """
     
-    HANDLERS_BASE_PATH: Final[tuple] = ('app', 'infrastructure', 'entry_point', 'handler')
+    HANDLERS_BASE_PATH: Final[tuple] = ('app', 'infrastructure', 'entry_point', 'controller')
     IGNORED_FILES: Final[Set[str]] = {'__init__.py', '__pycache__'}
 
     @classmethod
     def _get_all_module_names(cls) -> List[str]:
         """
-        Obtiene la lista de nombres de módulos de handlers disponibles.
+        Gets the list of available handler module names.
         
         Returns:
-            List[str]: Lista de nombres de módulos
+            List[str]: List of module names
         """
         return [
             module for module in os.listdir('/'.join(cls.HANDLERS_BASE_PATH))
@@ -30,23 +30,23 @@ class Handlers:
     @classmethod
     def _get_module_namespace(cls, handler_name: str) -> str:
         """
-        Construye el namespace completo para un módulo handler.
+        Builds the full namespace for a handler module.
         
         Args:
-            handler_name: Nombre del archivo handler
+            handler_name: Handler file name
             
         Returns:
-            str: Namespace completo del módulo
+            str: Full module namespace
         """
         return '.'.join([*cls.HANDLERS_BASE_PATH, handler_name[:-3]])
     
     @classmethod
     def iterator(cls) -> Iterator[ModuleType]:
         """
-        Itera sobre todos los módulos de handlers disponibles.
+        Iterates over all available handler modules.
         
         Returns:
-            Iterator[ModuleType]: Iterador de módulos de handlers
+            Iterator[ModuleType]: Iterator of handler modules
         """
         import importlib
         
@@ -57,10 +57,10 @@ class Handlers:
     @classmethod
     def get_module_namespaces(cls) -> Iterator[str]:
         """
-        Obtiene los namespaces de todos los módulos de handlers.
+        Gets the namespaces of all handler modules.
         
         Returns:
-            Iterator[str]: Iterador de namespaces de módulos
+            Iterator[str]: Iterator of module namespaces
         """
         return (
             cls._get_module_namespace(module)

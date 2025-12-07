@@ -12,13 +12,13 @@ logger: Final[logging.Logger] = logging.getLogger("Database Configuration")
 
 def get_database_url() -> str:
     """
-    Obtiene la URL de conexión a la base de datos según el entorno.
+    Gets the database connection URL based on the environment.
 
     Returns:
-        str: URL de conexión a la base de datos
+        str: Database connection URL
     """
-    if settings.ENV == 'local':
-        if settings.DATABASE_URL and 'postgresql' in settings.DATABASE_URL and '+asyncpg' not in settings.DATABASE_URL:
+    if settings.DATABASE_URL:
+        if 'postgresql' in settings.DATABASE_URL and '+asyncpg' not in settings.DATABASE_URL:
             return settings.DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
         return settings.DATABASE_URL
     
@@ -26,7 +26,7 @@ def get_database_url() -> str:
 
 
 DATABASE_URL: Final[str] = get_database_url()
-logger.info(f"Iniciando conexión asíncrona a base de datos en entorno {settings.ENV}")
+logger.info(f"Starting async database connection in {settings.ENV} environment")
 
 engine: Final = create_async_engine(DATABASE_URL)
 AsyncSessionLocal: Final = async_sessionmaker(
@@ -41,13 +41,13 @@ Base: Final = declarative_base()
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Genera una sesión de base de datos asíncrona.
+    Generates an asynchronous database session.
 
     Yields:
-        AsyncSession: Sesión de SQLAlchemy asíncrona
+        AsyncSession: Asynchronous SQLAlchemy session
 
     Note:
-        La sesión se cierra automáticamente después de su uso gracias al contexto `async with`.
+        The session is automatically closed after use thanks to the `async with` context.
     """
     async with AsyncSessionLocal() as session:
         yield session

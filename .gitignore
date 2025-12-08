@@ -4,3 +4,5 @@ __pycache__
 PLAN_DE_COMPLETITUD.md
 poetry.lock
 .gemini
+.pytest_cache
+.DS_Store

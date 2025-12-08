@@ -1,4 +1,4 @@
-import logging
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from app.application.container import Container
@@ -25,6 +25,8 @@ from app.infrastructure.entry_point.utils.exception_handler import (
 )
 
 
+from app.application.logging_config import configure_logging
+
 def create_app() -> FastAPI:
     """
     Creates and configures the FastAPI application with its dependencies, routes, and exception handlers.
@@ -33,10 +35,7 @@ def create_app() -> FastAPI:
         FastAPI: Configured FastAPI application instance
     """
     # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    configure_logging()
 
     container: Final[Container] = Container()
     app: Final[FastAPI] = FastAPI(
